@@ -27,11 +27,19 @@ set(GLM_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLM_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glm)
 
+include(FetchContent)
+FetchContent_Declare(
+    glad
+    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+    GIT_TAG        v0.1.36   # ou master pour la dernière version
+)
+FetchContent_MakeAvailable(glad)
+
 add_executable(game_of_life 
     src/main.cpp
     src/app.cpp
 )
 
 target_include_directories(game_of_life PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(game_of_life PRIVATE glfw glm)
+target_link_libraries(game_of_life PRIVATE glfw glm glad)
 target_compile_options(game_of_life PRIVATE -Wall -Wextra -Wpedantic)
