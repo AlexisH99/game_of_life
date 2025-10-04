@@ -1,6 +1,7 @@
 #include "app.hpp"
 #include "config.hpp"
 #include <cstdlib>
+#include <random>
 
 void framebuffer_size_callback([[maybe_unused]]GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -24,20 +25,27 @@ void checkCompileErrors(unsigned int shader, std::string type) {
     }
 }
 
-void Application::generateTextureData(int width, int height) {
-    pixels.resize(width * height);
+Application::Application()
+    : rng(std::random_device{}()), dist(0, 1) {}
+
+Application::~Application() {
+    cleanup();
+}
+
+void Application::generateRandomTexture(int width, int height) {
+    current.resize(width * height);
     for (int i = 0; i < width * height; i++) {
-        pixels[i] = (rand() % 2) ? 255 : 0; // 0 = noir, 255 = blanc
+        current[i] = dist(rng) ? 255 : 0;
     }
 }
 
 void Application::generateCheckerTexture(int width, int height) {
-    pixels.resize(width * height);
+    current.resize(width * height);
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int idx = y * width + x;
             // Case blanche si (x+y) pair, noire sinon
-            pixels[idx] = ((x + y) % 2 == 0) ? 255 : 0;
+            current[idx] = ((x + y) % 2 == 0) ? 255 : 0;
         }
     }
 }
@@ -48,7 +56,6 @@ void Application::run() {
     initShaders();
     initRender();
     mainLoop();
-    cleanup();
 }
 
 int Application::initWindow() {
@@ -159,7 +166,7 @@ void Application::initRender() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    generateTextureData(GRIDX, GRIDY);
+    generateRandomTexture(GRIDX, GRIDY);
     //generateCheckerTexture(GRIDX, GRIDY);
 
     glGenTextures(1, &textureID);
@@ -174,7 +181,7 @@ void Application::initRender() {
     // Allocation + upload initial
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, GRIDX, GRIDY, 0,
-                GL_RED, GL_UNSIGNED_BYTE, pixels.data());
+                GL_RED, GL_UNSIGNED_BYTE, current.data());
 }
 
 void Application::mainLoop() {
@@ -182,11 +189,10 @@ void Application::mainLoop() {
     int nbFrames = 0;
 
     while (!glfwWindowShouldClose(window)) {
-        generateTextureData(GRIDX, GRIDY);
         glBindTexture(GL_TEXTURE_2D, textureID);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRIDX, GRIDY,
-                        GL_RED, GL_UNSIGNED_BYTE, pixels.data());
+                        GL_RED, GL_UNSIGNED_BYTE, current.data());
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -200,6 +206,8 @@ void Application::mainLoop() {
         // Swap buffers et poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        generateRandomTexture(GRIDX, GRIDY);
 
         double currentTime = glfwGetTime();
         nbFrames++;

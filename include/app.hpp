@@ -1,9 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <random>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -14,6 +16,9 @@ void checkCompileErrors(unsigned int shader, std::string type);
 
 class Application {
     public:
+        Application();
+        ~Application();
+
         void run();
 
     private:
@@ -24,7 +29,7 @@ class Application {
         void mainLoop();
         void cleanup();
 
-        void generateTextureData(int width, int height);
+        void generateRandomTexture(int width, int height);
         void generateCheckerTexture(int width, int height);
 
         GLFWwindow* window = nullptr;
@@ -38,5 +43,7 @@ class Application {
         unsigned int VBO = 0, VAO = 0;
 
         unsigned int textureID = 0;
-        std::vector<unsigned char> pixels;
+        std::mt19937 rng;
+        std::uniform_int_distribution<int> dist;
+        std::vector<unsigned char> current;
 };
