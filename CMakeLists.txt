@@ -29,6 +29,7 @@ FetchContent_MakeAvailable(glm)
 
 add_executable(game_of_life 
     src/main.cpp
+    src/app.cpp
 )
 
 target_include_directories(game_of_life PUBLIC ${CMAKE_SOURCE_DIR}/include)

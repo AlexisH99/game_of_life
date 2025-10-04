@@ -1,11 +1,20 @@
 #include "config.hpp"
+#include "app.hpp"
 #include <iostream>
+#include <cstdlib>
 
 int main() {
 
-    std::cout << "This is a test\n";
-    std::cout << "Height: " << HEIGHT << "\n";
-    std::cout << "Width: " << WIDTH << "\n";
+    Application app;
 
-    return 0;
+    try {
+
+        app.run();
+
+    } catch(const std::exception& e) {
+
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
 }
