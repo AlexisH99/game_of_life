@@ -37,6 +37,8 @@ class Application {
         const char* vertexShaderSource = nullptr;
         const char* fragmentShaderSource = nullptr;
 
+        int fbWidth, fbHeight;
+
         unsigned int vertexShader = 0;
         unsigned int fragmentShader = 0;
         unsigned int shaderProgram = 0;

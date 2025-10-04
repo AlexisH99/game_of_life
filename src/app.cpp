@@ -114,7 +114,8 @@ int Application::initGlad() {
         return -1;
     }
 
-    glViewport(0, 0, 800, 600);
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    glViewport(0, 0, fbWidth, fbHeight);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     return 0;
