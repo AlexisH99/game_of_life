@@ -34,6 +34,7 @@ Application::~Application() {
 
 void Application::generateRandomTexture(int width, int height) {
     current.resize(width * height);
+    next.resize(width * height);
     for (int i = 0; i < width * height; i++) {
         current[i] = dist(rng) ? 255 : 0;
     }
@@ -41,6 +42,7 @@ void Application::generateRandomTexture(int width, int height) {
 
 void Application::generateCheckerTexture(int width, int height) {
     current.resize(width * height);
+    next.resize(width * height);
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int idx = y * width + x;
@@ -48,6 +50,33 @@ void Application::generateCheckerTexture(int width, int height) {
             current[idx] = ((x + y) % 2 == 0) ? 255 : 0;
         }
     }
+}
+
+void Application::updateGameOfLife(int width, int height) {
+    auto getCell = [&](int x, int y) -> int {
+        if (x < 0 || y < 0 || x >= width || y >= height) return 0; // bords = morts
+        return current[y * width + x] > 0; // 0 ou 1
+    };
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int alive = 0;
+            for (int dy = -1; dy <= 1; ++dy) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                    if (dx == 0 && dy == 0) continue;
+                    alive += getCell(x + dx, y + dy);
+                }
+            }
+            int idx = y * width + x;
+            if (current[idx]) {
+                next[idx] = (alive == 2 || alive == 3) ? 255 : 0;
+            } else {
+                next[idx] = (alive == 3) ? 255 : 0;
+            }
+        }
+    }
+
+    current.swap(next);
 }
 
 void Application::run() {
@@ -207,7 +236,7 @@ void Application::mainLoop() {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        generateRandomTexture(GRIDX, GRIDY);
+        updateGameOfLife(GRIDX, GRIDY);
 
         double currentTime = glfwGetTime();
         nbFrames++;

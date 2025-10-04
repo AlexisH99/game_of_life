@@ -31,6 +31,7 @@ class Application {
 
         void generateRandomTexture(int width, int height);
         void generateCheckerTexture(int width, int height);
+        void updateGameOfLife(int width, int height);
 
         GLFWwindow* window = nullptr;
         const char* vertexShaderSource = nullptr;
@@ -45,5 +46,6 @@ class Application {
         unsigned int textureID = 0;
         std::mt19937 rng;
         std::uniform_int_distribution<int> dist;
-        std::vector<unsigned char> current;
+        std::vector<uint8_t> current;
+        std::vector<uint8_t> next;
 };
