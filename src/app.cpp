@@ -1,5 +1,7 @@
 #include "app.hpp"
 #include "config.hpp"
+
+#include <iostream>
 #include <cstdlib>
 #include <random>
 

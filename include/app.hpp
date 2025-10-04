@@ -1,10 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <iostream>
 #include <vector>
-#include <cstdlib>
-#include <ctime>
 #include <random>
 
 #include <glad/glad.h>
