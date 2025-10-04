@@ -50,4 +50,6 @@ class Application {
         std::uniform_int_distribution<int> dist;
         std::vector<uint8_t> current;
         std::vector<uint8_t> next;
+
+        std::string title = "GOL - FPS: ";
 };

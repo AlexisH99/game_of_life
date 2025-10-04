@@ -96,7 +96,7 @@ int Application::initWindow() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "GOL", nullptr, nullptr);
+    window = glfwCreateWindow(WIDTH, HEIGHT, title.c_str(), nullptr, nullptr);
     if (!window) {
         std::cerr << "Erreur création fenêtre !" << std::endl;
         glfwTerminate();
@@ -242,8 +242,10 @@ void Application::mainLoop() {
         double currentTime = glfwGetTime();
         nbFrames++;
 
-        if (currentTime - lastTime >= 1.0) { // 1 seconde écoulée
+        if (currentTime - lastTime >= 1.0) {
             std::cout << "FPS: " << nbFrames << std::endl;
+            title = "GOL - FPS: " + std::to_string(nbFrames);
+            glfwSetWindowTitle(window, title.c_str());
             nbFrames = 0;
             lastTime = glfwGetTime();
         }
