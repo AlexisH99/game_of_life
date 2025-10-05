@@ -222,7 +222,6 @@ void Application::mainLoop() {
 
     while (!glfwWindowShouldClose(window)) {
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRIDX, GRIDY,
                         GL_RED, GL_UNSIGNED_BYTE, current.data());
 
@@ -231,7 +230,6 @@ void Application::mainLoop() {
 
         // Dessin
         glUseProgram(shaderProgram);
-        glBindTexture(GL_TEXTURE_2D, textureID);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
