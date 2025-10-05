@@ -4,7 +4,7 @@
 #include <vector>
 #include <random>
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
 
