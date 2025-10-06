@@ -56,7 +56,7 @@ game_of_life/
 
 ### 1. Clone the repository
 
-```bash
+```
 git clone https://github.com/<your-username>/game_of_life.git
 cd game_of_life
 ```
@@ -66,6 +66,7 @@ cd game_of_life
 ```
 cmake -S . -B build -G "<your_generator>" -DCMAKE_BUILD_TYPE=Release
 ```
+Tested generators : "mingw32-make", "Ninja"
 
 ### 3. Compile
 
@@ -89,7 +90,7 @@ cmake --build build
 
 ## Performance
 
-| Grid Size   | Average FPS (Ryzen 5 9600 + GTX 980 Ti) |
+| Grid Size   | Average FPS (Ryzen 5 9600X + GTX 980 Ti) |
 | ----------- | --------------------------------------- |
 | 500 × 500   | ~1900 FPS                               |
 | 1000 × 1000 | ~500 FPS                                |
@@ -102,12 +103,11 @@ The GPU performs only one draw call per frame.
 
 | Goal               | Description                                                    |
 | ------------------ | -------------------------------------------------------------- |
-| Compute shader     | Move the simulation to the GPU for full parallelism            |
 | Multi-threaded CPU | Use OpenMP or `std::execution` to parallelize updates          |
+| SIMD + bitpacking  | Optimizations allowing very large grids on CPU                 |
 | User controls      | Add pause, speed adjustment, and reset features                |
 | Persistence        | Save/load grid states (RLE, JSON, PNG)                         |
 | Colorization       | Visualize cell age or energy levels                            |
-| Vulkan port        | Replace OpenGL with a unified Vulkan compute + render pipeline |
 
 ## References
 
