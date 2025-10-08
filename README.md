@@ -10,6 +10,14 @@ The simulation is computed on the CPU, while visualization is handled on the GPU
 The program displays a grid of living and dead cells.  
 At each frame, the CPU updates the grid according to the Game of Life rules, uploads it as a texture, and the GPU renders it to the screen.
 
+In real speed:
+
+![gol_real_speed](https://imgur.com/a/conways-game-real-speed-mBqzczZ)
+
+Slowed at 60 fps:
+
+![gol_vsync](https://imgur.com/a/conways-game-of-life-slowed-LyMIod2)
+
 ---
 
 ## Concept
