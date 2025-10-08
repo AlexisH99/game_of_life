@@ -12,11 +12,11 @@ At each frame, the CPU updates the grid according to the Game of Life rules, upl
 
 In real speed:
 
-![gol_real_speed](https://imgur.com/a/conways-game-real-speed-mBqzczZ)
+![gol_real_speed](https://i.imgur.com/E2rxiD0.gif)
 
 Slowed at 60 fps:
 
-![gol_vsync](https://imgur.com/a/conways-game-of-life-slowed-LyMIod2)
+<video src="https://i.imgur.com/TO0tRFm.mp4" autoplay loop muted playsinline width="600"></video>
 
 ---
 
