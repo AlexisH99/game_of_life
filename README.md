@@ -14,10 +14,6 @@ In real speed:
 
 ![gol_real_speed](https://i.imgur.com/E2rxiD0.gif)
 
-Slowed at 60 fps:
-
-<video src="https://i.imgur.com/TO0tRFm.mp4" autoplay loop muted playsinline width="600"></video>
-
 ---
 
 ## Concept
