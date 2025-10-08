@@ -242,9 +242,9 @@ void Application::mainLoop() {
         double currentTime = glfwGetTime();
         nbFrames++;
 
-        if (currentTime - lastTime >= 1.0) {
-            std::cout << "FPS: " << nbFrames << std::endl;
-            title = "GOL - FPS: " + std::to_string(nbFrames);
+        if (currentTime - lastTime >= 0.25) {
+            std::cout << "FPS: " << nbFrames * 4 << std::endl;
+            title = "GOL - FPS: " + std::to_string(nbFrames * 4);
             glfwSetWindowTitle(window, title.c_str());
             nbFrames = 0;
             lastTime = glfwGetTime();
