@@ -111,7 +111,7 @@ int Application::initWindow() {
 }
 
 int Application::initGlad() {
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    if (!gladLoadGL(glfwGetProcAddress)) {
         std::cerr << "Erreur init GLAD !" << std::endl;
         return -1;
     }

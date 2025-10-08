@@ -19,21 +19,15 @@ FetchContent_MakeAvailable(glfw)
 include(FetchContent)
 FetchContent_Declare(
   glm
-  GIT_REPOSITORY https://github.com/g-truc/glm
-  GIT_TAG 1.0.1
+  GIT_REPOSITORY https://github.com/g-truc/glm.git
+  GIT_TAG master
 )
 set(GLM_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLM_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLM_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glm)
 
-include(FetchContent)
-FetchContent_Declare(
-    glad
-    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-    GIT_TAG        v0.1.36   # ou master pour la dernière version
-)
-FetchContent_MakeAvailable(glad)
+add_subdirectory(external/glad)
 
 add_executable(game_of_life 
     src/main.cpp
