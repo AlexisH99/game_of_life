@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <random>
+#include <format>
 
 void framebuffer_size_callback([[maybe_unused]]GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -105,7 +106,7 @@ int Application::initWindow() {
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(0);
+    //glfwSwapInterval(0);
 
     return 0;
 }
@@ -218,6 +219,7 @@ void Application::initRender() {
 
 void Application::mainLoop() {
     double lastTime = glfwGetTime();
+    double cumulated_time = 0;
     int nbFrames = 0;
 
     while (!glfwWindowShouldClose(window)) {
@@ -240,13 +242,15 @@ void Application::mainLoop() {
         updateGameOfLife(GRIDX, GRIDY);
 
         double currentTime = glfwGetTime();
+        cumulated_time =+ currentTime - lastTime;
         nbFrames++;
 
         if (currentTime - lastTime >= 0.25) {
-            std::cout << "FPS: " << nbFrames * 4 << std::endl;
-            title = "GOL - FPS: " + std::to_string(nbFrames * 4);
+            std::cout << "FPS: " << nbFrames /cumulated_time << std::endl;
+            title = "GOL - FPS: " + std::format("{:.2f}", nbFrames / cumulated_time);
             glfwSetWindowTitle(window, title.c_str());
             nbFrames = 0;
+            cumulated_time = 0;
             lastTime = glfwGetTime();
         }
     }
