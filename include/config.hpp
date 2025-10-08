@@ -5,11 +5,6 @@
 #include <filesystem>
 #include <nlohmann/json.hpp>
 
-#define WIDTH 800
-#define HEIGHT 600
-#define GRIDX 500
-#define GRIDY 500
-
 using json = nlohmann::json;
 
 class Config {

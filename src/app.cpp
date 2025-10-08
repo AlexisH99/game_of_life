@@ -1,5 +1,4 @@
 #include "app.hpp"
-#include "config.hpp"
 
 #include <iostream>
 #include <cstdlib>
@@ -83,11 +82,16 @@ void Application::updateGameOfLife(int width, int height) {
 }
 
 void Application::run() {
+    loadConfig();
     initWindow();
     initGlad();
     initShaders();
     initRender();
     mainLoop();
+}
+
+void Application::loadConfig() {
+    cfg.printAllParams();
 }
 
 int Application::initWindow() {
@@ -99,7 +103,7 @@ int Application::initWindow() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, title.c_str(), nullptr, nullptr);
+    window = glfwCreateWindow(cfg.width, cfg.height, title.c_str(), nullptr, nullptr);
     if (!window) {
         std::cerr << "Erreur création fenêtre !" << std::endl;
         glfwTerminate();
@@ -199,8 +203,8 @@ void Application::initRender() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    generateRandomTexture(GRIDX, GRIDY);
-    //generateCheckerTexture(GRIDX, GRIDY);
+    generateRandomTexture(cfg.gridx, cfg.gridy);
+    //generateCheckerTexture(cfg.gridx, cfg.gridy);
 
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
@@ -213,7 +217,7 @@ void Application::initRender() {
 
     // Allocation + upload initial
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, GRIDX, GRIDY, 0,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, cfg.gridx, cfg.gridy, 0,
                 GL_RED, GL_UNSIGNED_BYTE, current.data());
 }
 
@@ -224,7 +228,7 @@ void Application::mainLoop() {
 
     while (!glfwWindowShouldClose(window)) {
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRIDX, GRIDY,
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cfg.gridx, cfg.gridy,
                         GL_RED, GL_UNSIGNED_BYTE, current.data());
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -239,7 +243,7 @@ void Application::mainLoop() {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        updateGameOfLife(GRIDX, GRIDY);
+        updateGameOfLife(cfg.gridx, cfg.gridy);
 
         double currentTime = glfwGetTime();
         cumulated_time =+ currentTime - lastTime;

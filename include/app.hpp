@@ -6,6 +6,7 @@
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include "config.hpp"
 
 
 void framebuffer_size_callback([[maybe_unused]]GLFWwindow* window, int width, int height);
@@ -19,6 +20,7 @@ class Application {
         void run();
 
     private:
+        void loadConfig();
         int initWindow();
         int initGlad();
         void initShaders();
@@ -30,6 +32,7 @@ class Application {
         void generateCheckerTexture(int width, int height);
         void updateGameOfLife(int width, int height);
 
+        Config cfg;
         GLFWwindow* window = nullptr;
         const char* vertexShaderSource = nullptr;
         const char* fragmentShaderSource = nullptr;
