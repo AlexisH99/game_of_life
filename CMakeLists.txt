@@ -30,6 +30,7 @@ add_executable(game_of_life
     src/main.cpp
     src/app.cpp
     src/grid.cpp
+    src/grid_opt.cpp
     src/config.cpp
 )
 
