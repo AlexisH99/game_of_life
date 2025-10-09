@@ -83,6 +83,7 @@ void Application::updateGameOfLife(int width, int height) {
 
 void Application::run() {
     loadConfig();
+    initGrid();
     initWindow();
     initGlad();
     initShaders();
@@ -93,6 +94,11 @@ void Application::run() {
 void Application::loadConfig() {
     cfg.initConfig("config.json");
     cfg.printAllParams();
+}
+
+void Application::initGrid() {
+    grid.initSize(cfg.gridx, cfg.gridy);
+    grid.randomInit();
 }
 
 int Application::initWindow() {
@@ -204,7 +210,7 @@ void Application::initRender() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    generateRandomTexture(cfg.gridx, cfg.gridy);
+    //generateRandomTexture(cfg.gridx, cfg.gridy);
     //generateCheckerTexture(cfg.gridx, cfg.gridy);
 
     glGenTextures(1, &textureID);
@@ -219,7 +225,7 @@ void Application::initRender() {
     // Allocation + upload initial
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, cfg.gridx, cfg.gridy, 0,
-                GL_RED, GL_UNSIGNED_BYTE, current.data());
+                GL_RED, GL_UNSIGNED_BYTE, grid.get().data());
 }
 
 void Application::mainLoop() {
@@ -230,7 +236,7 @@ void Application::mainLoop() {
     while (!glfwWindowShouldClose(window)) {
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cfg.gridx, cfg.gridy,
-                        GL_RED, GL_UNSIGNED_BYTE, current.data());
+                        GL_RED, GL_UNSIGNED_BYTE, grid.get().data());
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -244,7 +250,7 @@ void Application::mainLoop() {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        updateGameOfLife(cfg.gridx, cfg.gridy);
+        grid.step();
 
         double currentTime = glfwGetTime();
         cumulated_time =+ currentTime - lastTime;

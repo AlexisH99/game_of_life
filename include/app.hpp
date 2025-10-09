@@ -6,6 +6,7 @@
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include "grid.hpp"
 #include "config.hpp"
 
 
@@ -21,6 +22,7 @@ class Application {
 
     private:
         void loadConfig();
+        void initGrid();
         int initWindow();
         int initGlad();
         void initShaders();
@@ -33,7 +35,9 @@ class Application {
         void updateGameOfLife(int width, int height);
 
         Config cfg;
+        Grid grid;
         GLFWwindow* window = nullptr;
+        
         const char* vertexShaderSource = nullptr;
         const char* fragmentShaderSource = nullptr;
 
