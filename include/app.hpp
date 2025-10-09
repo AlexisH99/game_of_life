@@ -50,10 +50,6 @@ class Application {
         unsigned int VBO = 0, VAO = 0;
 
         unsigned int textureID = 0;
-        std::mt19937 rng;
-        std::uniform_int_distribution<int> dist;
-        std::vector<uint8_t> current;
-        std::vector<uint8_t> next;
 
         std::string title = "GOL - FPS: ";
 };
