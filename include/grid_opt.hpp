@@ -3,7 +3,7 @@
 #include <vector>
 #include <random>
 
-inline int words_for_width(int N) {
+inline int w_for_w(int N) {
     int minwords = (N + 63) / 64;
     int pad = (minwords * 64) - N;
     return (pad == 0 || pad == 1) ? minwords + 1 : minwords;
@@ -21,10 +21,14 @@ class GridOpt {
         void step();
         void printMask();
         void printCurrent();
-        std::vector<uint64_t> get();
+        std::vector<uint64_t> getGrid();
+        std::vector<uint64_t> getMask();
+        std::vector<uint8_t> getUnpackedGrid();
     private:
         std::mt19937 rng;
         std::uniform_int_distribution<uint64_t> dist;
+        int gridX;
+        int gridY;
         int rows;
         int words_per_row;
         int blocksize;

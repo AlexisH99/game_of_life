@@ -51,11 +51,12 @@ void Application::loadConfig() {
 }
 
 void Application::initGrid() {
-    grid.initSize(cfg.gridx, cfg.gridy);
+    grid.initSize(cfg.gridx, cfg.gridy, 1);
+    grid.initMask();
     if (cfg.checker == true) {
-        grid.checkerInit();
+        grid.initCheckerGrid();
     } else {
-        grid.randomInit();
+        grid.initRandomGrid();
     }
 }
 
@@ -180,7 +181,7 @@ void Application::initRender() {
     // Allocation + upload initial
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, cfg.gridx, cfg.gridy, 0,
-                GL_RED, GL_UNSIGNED_BYTE, grid.get().data());
+                GL_RED, GL_UNSIGNED_BYTE, grid.getUnpackedGrid().data());
 }
 
 void Application::mainLoop() {
@@ -191,7 +192,7 @@ void Application::mainLoop() {
     while (!glfwWindowShouldClose(window)) {
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cfg.gridx, cfg.gridy,
-                        GL_RED, GL_UNSIGNED_BYTE, grid.get().data());
+                        GL_RED, GL_UNSIGNED_BYTE, grid.getUnpackedGrid().data());
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
