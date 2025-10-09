@@ -18,17 +18,6 @@ FetchContent_MakeAvailable(glfw)
 
 include(FetchContent)
 FetchContent_Declare(
-  glm
-  GIT_REPOSITORY https://github.com/g-truc/glm.git
-  GIT_TAG master
-)
-set(GLM_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLM_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLM_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(glm)
-
-include(FetchContent)
-FetchContent_Declare(
     nlohmann_json
     GIT_REPOSITORY https://github.com/nlohmann/json
     GIT_TAG v3.12.0 # ou la version que tu veux, 3.12.0 quand dispo
@@ -44,5 +33,5 @@ add_executable(game_of_life
 )
 
 target_include_directories(game_of_life PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(game_of_life PRIVATE glfw glm glad nlohmann_json::nlohmann_json)
+target_link_libraries(game_of_life PRIVATE glfw glad nlohmann_json::nlohmann_json)
 target_compile_options(game_of_life PRIVATE -Wall -Wextra -Wpedantic)
