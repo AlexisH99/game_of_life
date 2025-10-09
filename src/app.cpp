@@ -91,6 +91,7 @@ void Application::run() {
 }
 
 void Application::loadConfig() {
+    cfg.initConfig("config.json");
     cfg.printAllParams();
 }
 

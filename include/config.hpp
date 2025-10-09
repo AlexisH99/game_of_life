@@ -10,7 +10,6 @@ using json = nlohmann::json;
 class Config {
     public:
         Config();
-        Config(const std::string& p);
         ~Config();
 
         int width = 500;
@@ -18,6 +17,8 @@ class Config {
         int gridx = 500;
         int gridy = 500;
 
+        
+        void initConfig(const std::string& path);
         void printAllParams() const;
 
     private:

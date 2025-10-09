@@ -1,23 +1,26 @@
 #include "config.hpp"
 
-Config::Config() : Config("config.json") {}
-
-Config::Config(const std::string& p) : path(p) {
-    if (!std::filesystem::exists(p)) {
-        std::cout << "No config.json found. Creating default one..." << std::endl;
-        saveConfig(p);
-    } else {
-        std::cout << "Loading existing config.json..." << std::endl;
-        try {
-            loadConfig(p);
-        } catch (const std::exception& e) {
-            std::cerr << "Error reading config: " << e.what() << std::endl;
-        }
-    }
+Config::Config() {
+    
 }
 
 Config::~Config() {
 
+}
+
+void Config::initConfig(const std::string& p) {
+    path = p;
+    if (!std::filesystem::exists(path)) {
+        std::cout << "No config.json found. Creating default one..." << std::endl;
+        saveConfig(path);
+    } else {
+        std::cout << "Loading existing config.json..." << std::endl;
+        try {
+            loadConfig(path);
+        } catch (const std::exception& e) {
+            std::cerr << "Error reading config: " << e.what() << std::endl;
+        }
+    }
 }
 
 void Config::saveConfig(const std::string& path) {
