@@ -25,13 +25,16 @@ void Config::initConfig(const std::string& p) {
 
 void Config::saveConfig(const std::string& path) {
     json j = {
-        {"window", {
-            {"width", width},
-            {"height", height}
+        {"debug", {
+            {"checker", checker}
         }},
         {"grid", {
             {"gridx", gridx},
             {"gridy", gridy}
+        }},
+        {"window", {
+            {"width", width},
+            {"height", height}
         }}
     };
 
@@ -60,6 +63,11 @@ void Config::loadConfig(const std::string& path) {
         auto& g = j["grid"];
         if (g.contains("gridx"))  gridx = g["gridx"];
         if (g.contains("gridy"))  gridy = g["gridy"];
+    }
+
+    if (j.contains("debug")) {
+        auto& d = j["debug"];
+        if (d.contains("checker"))  checker = d["checker"];
     }
 
     std::cout << "Configuration loaded successfully.\n";

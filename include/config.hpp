@@ -16,7 +16,7 @@ class Config {
         int height = 500;
         int gridx = 500;
         int gridy = 500;
-
+        bool checker = false;
         
         void initConfig(const std::string& path);
         void printAllParams() const;

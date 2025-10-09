@@ -52,7 +52,11 @@ void Application::loadConfig() {
 
 void Application::initGrid() {
     grid.initSize(cfg.gridx, cfg.gridy);
-    grid.randomInit();
+    if (cfg.checker == true) {
+        grid.checkerInit();
+    } else {
+        grid.randomInit();
+    }
 }
 
 int Application::initWindow() {
