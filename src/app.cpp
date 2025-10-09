@@ -1,8 +1,7 @@
 #include "app.hpp"
-
 #include <iostream>
 #include <cstdlib>
-#include <random>
+#include <vector>
 #include <format>
 
 void framebuffer_size_callback([[maybe_unused]]GLFWwindow* window, int width, int height) {
@@ -75,7 +74,7 @@ int Application::initWindow() {
         return -1;
     }
     glfwMakeContextCurrent(window);
-    //glfwSwapInterval(0);
+    glfwSwapInterval(0);
 
     return 0;
 }

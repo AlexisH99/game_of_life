@@ -1,13 +1,9 @@
 #pragma once
 
-#include <cstdint>
-#include <vector>
-#include <random>
-
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
 #include "grid.hpp"
 #include "config.hpp"
+#include <glad/gl.h>
+#include <GLFW/glfw3.h>
 
 
 void framebuffer_size_callback([[maybe_unused]]GLFWwindow* window, int width, int height);
