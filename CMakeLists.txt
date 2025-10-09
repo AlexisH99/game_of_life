@@ -20,7 +20,7 @@ include(FetchContent)
 FetchContent_Declare(
     nlohmann_json
     GIT_REPOSITORY https://github.com/nlohmann/json
-    GIT_TAG v3.12.0 # ou la version que tu veux, 3.12.0 quand dispo
+    GIT_TAG v3.12.0
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
