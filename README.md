@@ -50,7 +50,8 @@ game_of_life/
 ## Dependencies
 
 - **GLFW** – window creation and input handling  
-- **GLAD** – OpenGL function loader  
+- **GLAD** – OpenGL function loader
+- **Nlohmann JSON** - JSON file parser  
 - **CMake** – build system  
 - **C++20** - compliant compiler
 
@@ -61,7 +62,7 @@ game_of_life/
 ### 1. Clone the repository
 
 ```
-git clone https://github.com/<your-username>/game_of_life.git
+git clone https://github.com/AlexisH99/game_of_life.git
 cd game_of_life
 ```
 
@@ -126,6 +127,9 @@ The GPU performs only one draw call per frame.
 
 - [GLAD OpenGL Loader Generator](https://glad.dav1d.de/)  
   Tool used to generate function loaders for OpenGL 3.3 Core Profile.
+
+- [Nlohmann JSON documentation](https://json.nlohmann.me/)
+  Used JSON parser
 
 - [OpenGL 3.3 Core Specification](https://registry.khronos.org/OpenGL/specs/gl/glspec33.core.pdf)  
   Official Khronos specification describing all API functions and constants used in this project.
