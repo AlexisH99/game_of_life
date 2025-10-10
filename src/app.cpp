@@ -52,13 +52,14 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
 void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int scancode, [[maybe_unused]]int action, [[maybe_unused]]int mods)
 {   
     Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    glfwMakeContextCurrent(window);
     if (app) {
         if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
             app->pause = !app->pause;
-            if (!app->cfg.vsync) {
-                if (app->pause) {
-                    glfwSwapInterval(1);
-                } else {
+            if (app->pause) {
+                glfwSwapInterval(1);
+            } else {
+                if (!(app->cfg.vsync)) {
                     glfwSwapInterval(0);
                 }
             }
@@ -275,16 +276,16 @@ void Application::mainLoop() {
         }
 
         if (cfg.showfps) {
-        currentTime = glfwGetTime();
-        nbFrames++;
-        if (currentTime - fpsTimer >= 0.25) {
-            fps = nbFrames / (currentTime - fpsTimer);
-            title = "GOL - FPS: " + std::format("{:.2f}", fps);
-            glfwSetWindowTitle(window, title.c_str());
-            nbFrames = 0;
-            fpsTimer = currentTime;
-        }
-        lastTime = currentTime;
+            currentTime = glfwGetTime();
+            nbFrames++;
+            if (currentTime - fpsTimer >= 0.25) {
+                fps = nbFrames / (currentTime - fpsTimer);
+                title = "GOL - FPS: " + std::format("{:.2f}", fps);
+                glfwSetWindowTitle(window, title.c_str());
+                nbFrames = 0;
+                fpsTimer = currentTime;
+            }
+            lastTime = currentTime;
         }
     }
 }
