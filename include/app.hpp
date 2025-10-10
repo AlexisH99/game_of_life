@@ -1,20 +1,9 @@
 #pragma once
 
-#include <cstdint>
-#include <vector>
-#include <random>
-
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include "grid.hpp"
 #include "grid_opt.hpp"
 #include "config.hpp"
-
-inline int words_for_width(int N) {
-    int minwords = (N + 63) / 64;
-    int pad = (minwords * 64) - N;
-    return (pad == 0 || pad == 1) ? minwords + 1 : minwords;
-}
 
 void checkCompileErrors(unsigned int shader, std::string type);
 

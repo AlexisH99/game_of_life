@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <cstdlib>
-#include <random>
 #include <format>
 
 void checkCompileErrors(unsigned int shader, std::string type) {
@@ -145,7 +144,6 @@ void Application::initShaders() {
         layout(binding = 0) uniform usampler2D packedGrid;
 
         uniform int leftpad;
-        uniform int words_per_row;
         uniform vec2 windowSize;
         uniform vec2 gridSize;
 
@@ -157,8 +155,8 @@ void Application::initShaders() {
             int gx = int(frag.x * (gridSize.x / windowSize.x));
             int gy = int(frag.y * (gridSize.y / windowSize.y));
 
-            int y = gy + 1;             // saute le padding vertical
-            int x = gx + leftpad;       // saute le padding horizontal
+            int y = gy + 1;
+            int x = gx + leftpad;
 
             if (gx < 0 || gx >= gridSize.x || gy < 0 || gy >= gridSize.y) {
                 discard;
@@ -260,7 +258,6 @@ void Application::mainLoop() {
 
         glUseProgram(shaderProgram);
         glUniform1i(glGetUniformLocation(shaderProgram, "leftpad"), grid.leftpad);
-        glUniform1i(glGetUniformLocation(shaderProgram, "words_per_row"), grid.words_per_row);
         glUniform2f(glGetUniformLocation(shaderProgram, "windowSize"), cfg.width, cfg.height);
         glUniform2f(glGetUniformLocation(shaderProgram, "gridSize"), cfg.gridx, cfg.gridy);
         glBindVertexArray(VAO);
