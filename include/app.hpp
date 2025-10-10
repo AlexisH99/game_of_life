@@ -16,7 +16,6 @@ inline int words_for_width(int N) {
     return (pad == 0 || pad == 1) ? minwords + 1 : minwords;
 }
 
-void framebuffer_size_callback([[maybe_unused]]GLFWwindow* window, int width, int height);
 void checkCompileErrors(unsigned int shader, std::string type);
 
 class Application {
@@ -25,6 +24,7 @@ class Application {
         ~Application();
 
         void run();
+        static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
     private:
         void loadConfig();

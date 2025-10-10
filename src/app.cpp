@@ -5,10 +5,6 @@
 #include <random>
 #include <format>
 
-void framebuffer_size_callback([[maybe_unused]]GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-}
-
 void checkCompileErrors(unsigned int shader, std::string type) {
     int success;
     char infoLog[512];
@@ -45,6 +41,15 @@ void Application::run() {
     mainLoop();
 }
 
+void Application::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    if (app) {
+        glViewport(0, 0, width, height);
+        app->cfg.width = width;
+        app->cfg.height = height;
+    }
+}
+
 void Application::loadConfig() {
     cfg.initConfig("config.json");
     cfg.printAllParams();
@@ -76,6 +81,7 @@ int Application::initWindow() {
         return -1;
     }
     glfwMakeContextCurrent(window);
+    glfwSetWindowUserPointer(window, this);
     glfwSwapInterval(0);
 
     return 0;
@@ -112,37 +118,36 @@ void Application::initShaders() {
         #version 430 core
         layout(binding = 0) uniform usampler2D packedGrid;
 
-        uniform int gridX;
-        uniform int gridY;
         uniform int leftpad;
         uniform int words_per_row;
+        uniform vec2 windowSize;
+        uniform vec2 gridSize;
 
         out vec4 FragColor;
 
         void main() {
-            ivec2 frag = ivec2(gl_FragCoord.xy);
+            vec2 frag = (gl_FragCoord.xy - vec2(0.5));
 
-            // Ignorer padding vertical
-            if (frag.y >= gridY) discard;
+            int gx = int(frag.x * (gridSize.x / windowSize.x));
+            int gy = int(frag.y * (gridSize.y / windowSize.y));
 
-            // Conversion vers indices packés
-            int y = frag.y + 1;             // saute la ligne de padding du haut
-            int x = frag.x + leftpad;       // saute le padding horizontal gauche
+            int y = gy + 1;             // saute le padding vertical
+            int x = gx + leftpad;       // saute le padding horizontal
+
+            if (gx < 0 || gx >= gridsize.x || gy < 0 || gy >= gridsize.y) {
+                discard;
+            }
 
             int word_index = x / 64;
             int bit_index  = x % 64;
 
-            // Lire deux uint32 (mot bas + mot haut)
             uvec2 wordpair = texelFetch(packedGrid, ivec2(word_index, y), 0).rg;
-            uint low  = wordpair.r;   // bits 0–31
-            uint high = wordpair.g;   // bits 32–63
+            uint low  = wordpair.r;
+            uint high = wordpair.g;
 
-            uint alive;
-            if (bit_index < 32) {
-                alive = (low >> bit_index) & 1u;
-            } else {
-                alive = (high >> (bit_index - 32)) & 1u;
-            }
+            uint alive = (bit_index < 32)
+                    ? ((low >> bit_index) & 1u)
+                    : ((high >> (bit_index - 32)) & 1u);
 
             float val = float(alive);
             FragColor = vec4(val, val, val, 1.0);
@@ -190,7 +195,6 @@ void Application::initRender() {
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    // Attribut position (vec2)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -200,16 +204,12 @@ void Application::initRender() {
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    // Réglages de filtrage et wrapping
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    // Allocation + upload initial
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, cfg.gridx, cfg.gridy, 0,
-    //            GL_RED, GL_UNSIGNED_BYTE, grid.getUnpacked().data());
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32UI,
             grid.words_per_row, grid.rows, 0,
@@ -228,19 +228,17 @@ void Application::mainLoop() {
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, grid.words_per_row, grid.rows,
                         GL_RG_INTEGER, GL_UNSIGNED_INT, grid.getGrid32Ptr());
 
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(1.0f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Dessin
         glUseProgram(shaderProgram);
-        glUniform1i(glGetUniformLocation(shaderProgram, "gridX"), grid.gridX);
-        glUniform1i(glGetUniformLocation(shaderProgram, "gridY"), grid.gridY);
         glUniform1i(glGetUniformLocation(shaderProgram, "leftpad"), grid.leftpad);
         glUniform1i(glGetUniformLocation(shaderProgram, "words_per_row"), grid.words_per_row);
+        glUniform2f(glGetUniformLocation(shaderProgram, "windowSize"), cfg.width, cfg.height);
+        glUniform2f(glGetUniformLocation(shaderProgram, "gridSize"), cfg.gridx, cfg.gridy);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        // Swap buffers et poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
 
