@@ -270,7 +270,6 @@ void Application::mainLoop() {
 
         if (currentTime - fpsTimer >= 0.25) {
             fps = nbFrames / (currentTime - fpsTimer);
-            std::cout << "FPS: " << fps << std::endl;
             title = "GOL - FPS: " + std::format("{:.2f}", fps);
             glfwSetWindowTitle(window, title.c_str());
 
