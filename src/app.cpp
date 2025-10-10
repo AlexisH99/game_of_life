@@ -4,10 +4,6 @@
 #include <vector>
 #include <format>
 
-void framebuffer_size_callback([[maybe_unused]]GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-}
-
 void checkCompileErrors(unsigned int shader, std::string type) {
     int success;
     char infoLog[512];
@@ -44,17 +40,53 @@ void Application::run() {
     mainLoop();
 }
 
+void Application::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    if (app) {
+        glViewport(0, 0, width, height);
+        app->cfg.width = width;
+        app->cfg.height = height;
+    }
+}
+
+void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int scancode, [[maybe_unused]]int action, [[maybe_unused]]int mods)
+{   
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    glfwMakeContextCurrent(window);
+    if (app) {
+        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+            app->pause = !app->pause;
+            if (app->pause) {
+                glfwSwapInterval(1);
+            } else {
+                if (!(app->cfg.vsync)) {
+                    glfwSwapInterval(0);
+                }
+            }
+        }
+        if (app->pause && key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
+            app->grid.step();
+        }
+    }
+}
+
 void Application::loadConfig() {
     cfg.initConfig("config.json");
     cfg.printAllParams();
+    pause = cfg.freeze_at_start;
+    if (cfg.width < 120) {
+        std::cout << "Warning : minimum allowed width is 120. Moved back to this value.\n";
+        cfg.width = 120;
+    }
 }
 
 void Application::initGrid() {
-    grid.initSize(cfg.gridx, cfg.gridy);
+    grid.initSize(cfg.gridx, cfg.gridy, 1);
+    grid.initMask();
     if (cfg.checker == true) {
-        grid.checkerInit();
+        grid.initCheckerGrid();
     } else {
-        grid.randomInit();
+        grid.initRandomGrid();
     }
 }
 
@@ -63,7 +95,7 @@ int Application::initWindow() {
         std::cerr << "Erreur init GLFW !" << std::endl;
         return -1;
     }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -74,7 +106,13 @@ int Application::initWindow() {
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(0);
+    glfwSetWindowUserPointer(window, this);
+    glfwSetKeyCallback(window, key_callback);
+    if (cfg.vsync || (pause & !cfg.vsync)) {
+        glfwSwapInterval(1);
+    } else { 
+        glfwSwapInterval(0);
+    }
 
     return 0;
 }
@@ -94,7 +132,7 @@ int Application::initGlad() {
 
 void Application::initShaders() {
     vertexShaderSource = R"(
-        #version 330 core
+        #version 430 core
         layout (location = 0) in vec2 aPos;
         layout (location = 1) in vec2 aTexCoord;
 
@@ -107,15 +145,41 @@ void Application::initShaders() {
     )";
 
     fragmentShaderSource = R"(
-        #version 330 core
+        #version 430 core
+        layout(binding = 0) uniform usampler2D packedGrid;
+
+        uniform int leftpad;
+        uniform vec2 windowSize;
+        uniform vec2 gridSize;
+
         out vec4 FragColor;
 
-        in vec2 TexCoord;
-        uniform sampler2D ourTexture;
-
         void main() {
-            float val = texture(ourTexture, TexCoord).r; // lecture canal rouge
-            FragColor = vec4(val, val, val, 1.0);        // noir/blanc
+            vec2 frag = (gl_FragCoord.xy - vec2(0.5));
+
+            int gx = int(frag.x * (gridSize.x / windowSize.x));
+            int gy = int(frag.y * (gridSize.y / windowSize.y));
+
+            int y = gy + 1;
+            int x = gx + leftpad;
+
+            if (gx < 0 || gx >= gridSize.x || gy < 0 || gy >= gridSize.y) {
+                discard;
+            }
+
+            int word_index = x / 64;
+            int bit_index  = x % 64;
+
+            uvec2 wordpair = texelFetch(packedGrid, ivec2(word_index, y), 0).rg;
+            uint low  = wordpair.r;
+            uint high = wordpair.g;
+
+            uint alive = (bit_index < 32)
+                    ? ((low >> bit_index) & 1u)
+                    : ((high >> (bit_index - 32)) & 1u);
+
+            float val = float(alive);
+            FragColor = vec4(val, val, val, 1.0);
         }
     )";
 
@@ -160,7 +224,6 @@ void Application::initRender() {
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    // Attribut position (vec2)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -170,53 +233,59 @@ void Application::initRender() {
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    // Réglages de filtrage et wrapping
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    // Allocation + upload initial
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, cfg.gridx, cfg.gridy, 0,
-                GL_RED, GL_UNSIGNED_BYTE, grid.get().data());
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32UI,
+            grid.words_per_row, grid.rows, 0,
+            GL_RG_INTEGER, GL_UNSIGNED_INT,
+            grid.getGrid32Ptr());
 }
 
 void Application::mainLoop() {
     double lastTime = glfwGetTime();
-    double cumulated_time = 0;
+    double currentTime = glfwGetTime();
+    double fpsTimer = lastTime;
+    double fps = 0.0;
     int nbFrames = 0;
 
     while (!glfwWindowShouldClose(window)) {
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cfg.gridx, cfg.gridy,
-                        GL_RED, GL_UNSIGNED_BYTE, grid.get().data());
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, grid.words_per_row, grid.rows,
+                        GL_RG_INTEGER, GL_UNSIGNED_INT, grid.getGrid32Ptr());
 
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(1.0f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Dessin
         glUseProgram(shaderProgram);
+        glUniform1i(glGetUniformLocation(shaderProgram, "leftpad"), grid.leftpad);
+        glUniform2f(glGetUniformLocation(shaderProgram, "windowSize"), cfg.width, cfg.height);
+        glUniform2f(glGetUniformLocation(shaderProgram, "gridSize"), cfg.gridx, cfg.gridy);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        // Swap buffers et poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
+        
+        if (!pause) {
+            grid.step();
+        }
 
-        grid.step();
-
-        double currentTime = glfwGetTime();
-        cumulated_time =+ currentTime - lastTime;
-        nbFrames++;
-
-        if (currentTime - lastTime >= 0.25) {
-            std::cout << "FPS: " << nbFrames /cumulated_time << std::endl;
-            title = "GOL - FPS: " + std::format("{:.2f}", nbFrames / cumulated_time);
-            glfwSetWindowTitle(window, title.c_str());
-            nbFrames = 0;
-            cumulated_time = 0;
-            lastTime = glfwGetTime();
+        if (cfg.showfps) {
+            currentTime = glfwGetTime();
+            nbFrames++;
+            if (currentTime - fpsTimer >= 0.25) {
+                fps = nbFrames / (currentTime - fpsTimer);
+                title = "GOL - FPS: " + std::format("{:.2f}", fps);
+                glfwSetWindowTitle(window, title.c_str());
+                nbFrames = 0;
+                fpsTimer = currentTime;
+            }
+            lastTime = currentTime;
         }
     }
 }

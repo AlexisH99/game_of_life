@@ -5,7 +5,6 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-
 void framebuffer_size_callback([[maybe_unused]]GLFWwindow* window, int width, int height);
 void checkCompileErrors(unsigned int shader, std::string type);
 
@@ -15,6 +14,8 @@ class Application {
         ~Application();
 
         void run();
+        static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+        static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
     private:
         void loadConfig();
@@ -25,10 +26,6 @@ class Application {
         void initRender();
         void mainLoop();
         void cleanup();
-
-        void generateRandomTexture(int width, int height);
-        void generateCheckerTexture(int width, int height);
-        void updateGameOfLife(int width, int height);
 
         Config cfg;
         Grid grid;
@@ -47,5 +44,7 @@ class Application {
 
         unsigned int textureID = 0;
 
-        std::string title = "GOL - FPS: ";
+        std::string title = "GOL";
+
+        bool pause = true;
 };
