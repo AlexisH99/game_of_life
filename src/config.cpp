@@ -28,6 +28,9 @@ void Config::saveConfig(const std::string& path) {
         {"debug", {
             {"checker", checker}
         }},
+        {"display", {
+            {"vsync", vsync}
+        }},
         {"grid", {
             {"gridx", gridx},
             {"gridy", gridy}
@@ -67,6 +70,11 @@ void Config::loadConfig(const std::string& path) {
     if (j.contains("debug")) {
         auto& d = j["debug"];
         if (d.contains("checker"))  checker = d["checker"];
+    }
+    
+    if (j.contains("display")) {
+        auto& disp = j["display"];
+        if (disp.contains("vsync"))  vsync = disp["vsync"];
     }
 
     std::cout << "Configuration loaded successfully.\n";

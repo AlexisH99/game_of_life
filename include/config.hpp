@@ -17,6 +17,7 @@ class Config {
         int gridx = 500;
         int gridy = 500;
         bool checker = false;
+        bool vsync = false;
         
         void initConfig(const std::string& path);
         void printAllParams() const;
