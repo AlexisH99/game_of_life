@@ -73,6 +73,10 @@ void Application::loadConfig() {
     cfg.initConfig("config.json");
     cfg.printAllParams();
     pause = cfg.freeze_at_start;
+    if (cfg.width < 120) {
+        std::cout << "Warning : minimum allowed width is 120. Moved back to this value.\n";
+        cfg.width = 120;
+    }
 }
 
 void Application::initGrid() {
