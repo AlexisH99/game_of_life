@@ -238,6 +238,7 @@ void Application::initRender() {
 
 void Application::mainLoop() {
     double lastTime = glfwGetTime();
+    double currentTime = glfwGetTime();
     double fpsTimer = lastTime;
     double fps = 0.0;
     int nbFrames = 0;
@@ -265,7 +266,7 @@ void Application::mainLoop() {
             grid.step();
         }
 
-        double currentTime = glfwGetTime();
+        currentTime = glfwGetTime();
         nbFrames++;
 
         if (currentTime - fpsTimer >= 0.25) {
