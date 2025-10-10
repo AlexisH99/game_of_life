@@ -9,10 +9,10 @@ inline int w_for_w(int N) {
     return (pad == 0 || pad == 1) ? minwords + 1 : minwords;
 }
 
-class GridOpt {
+class Grid {
     public:
-        GridOpt();
-        ~GridOpt();
+        Grid();
+        ~Grid();
 
         void initSize(int gridx, int gridy, int bs);
         void initMask();

@@ -1,16 +1,16 @@
-#include <grid_opt.hpp>
+#include <grid.hpp>
 #include <iostream>
 #include <cstdlib>
 
-GridOpt::GridOpt() : rng(std::random_device{}()), dist(0, ~0ULL) {
+Grid::Grid() : rng(std::random_device{}()), dist(0, ~0ULL) {
 
 }
 
-GridOpt::~GridOpt() {
+Grid::~Grid() {
 
 }
 
-void GridOpt::initSize(int gridx, int gridy, int bs) {
+void Grid::initSize(int gridx, int gridy, int bs) {
     gridX = gridx;
     gridY = gridy;
     rows = gridy + 2;
@@ -21,7 +21,7 @@ void GridOpt::initSize(int gridx, int gridy, int bs) {
     next.resize(rows * words_per_row);
 }
 
-void GridOpt::initMask() {
+void Grid::initMask() {
     int pad = ((words_per_row * 64) - gridX);
     leftpad = pad / 2;
     int rightpad = leftpad + pad % 2;
@@ -38,7 +38,7 @@ void GridOpt::initMask() {
     }
 }
 
-void GridOpt::initCheckerGrid() {
+void Grid::initCheckerGrid() {
     uint64_t word = 0x5555555555555555;
 
     for (int r = 0; r < rows; ++r) {
@@ -53,7 +53,7 @@ void GridOpt::initCheckerGrid() {
     }
 }
 
-void GridOpt::initRandomGrid() {
+void Grid::initRandomGrid() {
     std::vector<uint64_t> random_buffer(current.size());
     for (auto &val : random_buffer)
         val = dist(rng);
@@ -63,7 +63,7 @@ void GridOpt::initRandomGrid() {
     }
 }
 
-void GridOpt::step() {
+void Grid::step() {
     for (int rb = 1; rb < rows - 1; rb += blocksize) {
         int rend = std::min(rows - 1, rb + blocksize);
         for (int r = rb; r < rend; ++r) {
@@ -112,19 +112,19 @@ void GridOpt::step() {
     //unpackGrid();
 }
 
-std::vector<uint64_t> GridOpt::getGrid() {
+std::vector<uint64_t> Grid::getGrid() {
     return current;
 }
 
-std::vector<uint64_t> GridOpt::getMask() {
+std::vector<uint64_t> Grid::getMask() {
     return mask;
 }
 
-const uint32_t* GridOpt::getGrid32Ptr() const {
+const uint32_t* Grid::getGrid32Ptr() const {
     return reinterpret_cast<const uint32_t*>(current.data());
 }
 
-void GridOpt::printMask() {
+void Grid::printMask() {
     for (int r = 0; r < rows; ++r) {
         for (int w = 0; w < words_per_row; ++w) {
             for (int b = 0; b < 64; ++b) {
@@ -135,7 +135,7 @@ void GridOpt::printMask() {
     }
 }
 
-void GridOpt::printCurrent() {
+void Grid::printCurrent() {
     for (int r = 0; r < rows; ++r) {
         for (int w = 0; w < words_per_row; ++w) {
             for (int b = 0; b < 64; ++b) {

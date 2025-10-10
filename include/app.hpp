@@ -2,7 +2,7 @@
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include "grid_opt.hpp"
+#include "grid.hpp"
 #include "config.hpp"
 
 void checkCompileErrors(unsigned int shader, std::string type);
@@ -27,7 +27,7 @@ class Application {
         void cleanup();
 
         Config cfg;
-        GridOpt grid;
+        Grid grid;
         GLFWwindow* window = nullptr;
         
         const char* vertexShaderSource = nullptr;
