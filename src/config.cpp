@@ -29,7 +29,8 @@ void Config::saveConfig(const std::string& path) {
             {"checker", checker}
         }},
         {"display", {
-            {"vsync", vsync}
+            {"vsync", vsync},
+            {"freeze_at_start", freeze_at_start},
         }},
         {"grid", {
             {"gridx", gridx},
@@ -75,6 +76,7 @@ void Config::loadConfig(const std::string& path) {
     if (j.contains("display")) {
         auto& disp = j["display"];
         if (disp.contains("vsync"))  vsync = disp["vsync"];
+        if (disp.contains("freeze_at_start"))  freeze_at_start = disp["freeze_at_start"];
     }
 
     std::cout << "Configuration loaded successfully.\n";

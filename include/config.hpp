@@ -18,6 +18,7 @@ class Config {
         int gridy = 500;
         bool checker = false;
         bool vsync = false;
+        bool freeze_at_start = true;
         
         void initConfig(const std::string& path);
         void printAllParams() const;

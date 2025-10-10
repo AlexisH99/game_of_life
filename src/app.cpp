@@ -50,9 +50,20 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
     }
 }
 
+void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int scancode, [[maybe_unused]]int action, [[maybe_unused]]int mods)
+{   
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    if (app) {
+        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+            app->pause = !app->pause;
+        }
+    }
+}
+
 void Application::loadConfig() {
     cfg.initConfig("config.json");
     cfg.printAllParams();
+    pause = cfg.freeze_at_start;
 }
 
 void Application::initGrid() {
@@ -82,7 +93,12 @@ int Application::initWindow() {
     }
     glfwMakeContextCurrent(window);
     glfwSetWindowUserPointer(window, this);
-    glfwSwapInterval(0);
+    glfwSetKeyCallback(window, key_callback);
+    if (cfg.vsync) {
+        glfwSwapInterval(1);
+    } else { 
+        glfwSwapInterval(0);
+    }
 
     return 0;
 }
@@ -241,8 +257,10 @@ void Application::mainLoop() {
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-
-        grid.step();
+        
+        if (!pause) {
+            grid.step();
+        }
 
         double currentTime = glfwGetTime();
         nbFrames++;

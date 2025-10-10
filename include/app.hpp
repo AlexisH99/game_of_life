@@ -25,6 +25,7 @@ class Application {
 
         void run();
         static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+        static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
     private:
         void loadConfig();
@@ -54,4 +55,6 @@ class Application {
         unsigned int textureID = 0;
 
         std::string title = "GOL - FPS: ";
+
+        bool pause = true;
 };
