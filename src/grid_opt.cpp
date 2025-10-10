@@ -18,11 +18,12 @@ void GridOpt::initSize(int gridx, int gridy, int bs) {
     mask.resize(rows * words_per_row);
     current.resize(rows * words_per_row);
     next.resize(rows * words_per_row);
+    unpacked.resize(gridX * gridY);
 }
 
 void GridOpt::initMask() {
     int pad = ((words_per_row * 64) - rows + 2);
-    int leftpad = pad / 2;
+    leftpad = pad / 2;
     int rightpad = leftpad + pad % 2;
     for (int r = 1; r < rows-1; r++) {
         if (words_per_row == 1) {
@@ -108,6 +109,7 @@ void GridOpt::step() {
         }
     }
     std::swap(current, next);
+    //unpackGrid();
 }
 
 std::vector<uint64_t> GridOpt::getGrid() {
@@ -118,20 +120,22 @@ std::vector<uint64_t> GridOpt::getMask() {
     return mask;
 }
 
-std::vector<uint8_t> GridOpt::getUnpackedGrid() {
-    std::vector<uint8_t> output(gridX * gridY, 0);
+std::vector<uint8_t> GridOpt::getUnpacked() {
+    return unpacked;
+}
+
+void GridOpt::unpackGrid() {
     int index = 0;
     for (int r = 0; r < rows; ++r) {
         for (int w = 0; w < words_per_row; ++w) {
             for (int b = 0; b < 64; ++b) {
                 if (mask[r * words_per_row + w] & (1ULL << b)) {
-                    output[index] = (current[r * words_per_row + w] & (1ULL << b) ? 255 : 0);
+                    unpacked[index] = (current[r * words_per_row + w] & (1ULL << b) ? 255 : 0);
                     index++;
                 }
             }
         }
     }
-    return output;
 }
 
 void GridOpt::printMask() {

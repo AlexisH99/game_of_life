@@ -23,16 +23,19 @@ class GridOpt {
         void printCurrent();
         std::vector<uint64_t> getGrid();
         std::vector<uint64_t> getMask();
-        std::vector<uint8_t> getUnpackedGrid();
-    private:
-        std::mt19937 rng;
-        std::uniform_int_distribution<uint64_t> dist;
+        std::vector<uint8_t> getUnpacked();
+        void unpackGrid();
         int gridX;
         int gridY;
+        int leftpad;
         int rows;
         int words_per_row;
         int blocksize;
+    private:
+        std::mt19937 rng;
+        std::uniform_int_distribution<uint64_t> dist;
         std::vector<uint64_t> mask;
         std::vector<uint64_t> current;
         std::vector<uint64_t> next;
+        std::vector<uint8_t> unpacked;
 };
