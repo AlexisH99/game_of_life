@@ -57,6 +57,9 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
         if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
             app->pause = !app->pause;
         }
+        if (app->pause && key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
+            app->grid.step();
+        }
     }
 }
 
