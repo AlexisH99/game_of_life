@@ -14,6 +14,7 @@ class Config {
         int gridx = 500;
         int gridy = 500;
         bool checker = false;
+        bool showfps = true;
         bool vsync = false;
         bool freeze_at_start = true;
         

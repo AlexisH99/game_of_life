@@ -274,19 +274,18 @@ void Application::mainLoop() {
             grid.step();
         }
 
+        if (cfg.showfps) {
         currentTime = glfwGetTime();
         nbFrames++;
-
         if (currentTime - fpsTimer >= 0.25) {
             fps = nbFrames / (currentTime - fpsTimer);
             title = "GOL - FPS: " + std::format("{:.2f}", fps);
             glfwSetWindowTitle(window, title.c_str());
-
             nbFrames = 0;
             fpsTimer = currentTime;
         }
-
         lastTime = currentTime;
+        }
     }
 }
 

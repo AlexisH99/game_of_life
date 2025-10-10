@@ -29,7 +29,8 @@ void Config::initConfig(const std::string& p) {
 void Config::saveConfig(const std::string& path) {
     json j = {
         {"debug", {
-            {"checker", checker}
+            {"checker", checker},
+            {"showfps", showfps}
         }},
         {"display", {
             {"vsync", vsync},
@@ -74,6 +75,7 @@ void Config::loadConfig(const std::string& path) {
     if (j.contains("debug")) {
         auto& d = j["debug"];
         if (d.contains("checker"))  checker = d["checker"];
+        if (d.contains("showfps"))  showfps = d["showfps"];
     }
     
     if (j.contains("display")) {
