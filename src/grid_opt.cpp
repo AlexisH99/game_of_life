@@ -22,7 +22,7 @@ void GridOpt::initSize(int gridx, int gridy, int bs) {
 }
 
 void GridOpt::initMask() {
-    int pad = ((words_per_row * 64) - rows + 2);
+    int pad = ((words_per_row * 64) - gridX);
     leftpad = pad / 2;
     int rightpad = leftpad + pad % 2;
     for (int r = 1; r < rows-1; r++) {
