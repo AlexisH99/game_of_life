@@ -18,13 +18,14 @@ In real speed:
 
 ## Concept
 
-- Each cell is stored as an 8-bit unsigned integer (`uint8_t`) with values `0` (dead) or `255` (alive).  
-- Two buffers, `current` and `next`, store consecutive generations.  
-- The update loop is fully CPU-based and cache-efficient.  
-- A single texture (`GL_R8`) is updated each frame via `glTexSubImage2D`.  
-- Rendering uses one fullscreen quad drawn with a fragment shader that samples the texture.
+- The grid is stored in a vector, each row is represented by one to several words of `uint64_t`.
+- Each cell is stored as a single bit in a `uint64_t` word.  
+- Vectors `current` and `next`, store consecutive generations, while `mask` stores a mask of active cells.
+- `step()` iterates overs `current` to compute `next` using efficient bitwise operations, solving 64 per 64 cells.  
+- A single texture (`GL_RG32UI`) is updated each frame via `glTexSubImage2D`, by casting `current` as a vector of uint32_t.  
+- Rendering uses one fullscreen quad drawn with a fragment shader that unpacks and samples the texture using paddings and bitwise operations.
 
-This method avoids heavy instancing or GPU synchronization, providing excellent performance even for large grids.
+This method avoids heavy instancing, providing excellent performance even for large grids. All computations on CPU are currently monothread.
 
 ---
 
@@ -35,14 +36,14 @@ game_of_life/
 ├── src/
 │ ├── main.cpp # Entry point
 │ ├── app.cpp # Implementation (setup, loop, rendering)
+│ ├── grid.cpp # Grid implementation (generation, solving)
+│ ├── config.cpp # Config parsinf implementation
 ├── include/
 │ ├── app.hpp # Application class declaration
-│ └── config.hpp # Constants (window and grid sizes)
+│ ├── grid.hpp # Grid class declaration
+│ └── config.hpp # Config class declarations
 ├── external/
 │ └── glad/ # GLAD 2.0.8 vendored
-├── shaders/
-│ ├── vertex.glsl # Vertex shader
-│ └── fragment.glsl # Fragment shader
 └── CMakeLists.txt # Build configuration
 ````
 ---
@@ -95,24 +96,21 @@ cmake --build build
 
 ## Performance
 
-| Grid Size   | Average FPS (Ryzen 5 9600X + GTX 980 Ti) |
-| ----------- | --------------------------------------- |
-| 500 × 500   | ~1900 FPS                               |
-| 1000 × 1000 | ~500 FPS                                |
-| 2000 × 2000 | ~120 FPS                                |
+Performed on Ryzen 5 9600X + GTX 980 Ti
+| Grid Size   | v1.0.0 (FPS avg)                        | v1.1.0 (FPS avg)
+| ----------- | --------------------------------------- | --------------------------------------- |
+| 500 × 500   | ~1900 FPS                               | (Coming soon)                           |
+| 1000 × 1000 | ~500 FPS                                |                                         |
+| 2000 × 2000 | ~120 FPS                                |                                         |
 
-Performance is limited mainly by CPU memory bandwidth, not GPU rendering.
-The GPU performs only one draw call per frame.
+Performance is now limited by rendering for small grids < 1000x1000. Then large grids > 5000x5000 are CPU limited.
+A i7-6700HQ GTX960M laptop runs a 2000x2000 grid at ~950 fps on this dev branch, to be tested and released on v1.1.0.
 
 ## Possible improvements
 
 | Goal               | Description                                                    |
 | ------------------ | -------------------------------------------------------------- |
-| Multi-threaded CPU | Use OpenMP or `std::execution` to parallelize updates          |
-| SIMD + bitpacking  | Optimizations allowing very large grids on CPU                 |
-| User controls      | Add pause, speed adjustment, and reset features                |
 | Persistence        | Save/load grid states (RLE, JSON, PNG)                         |
-| Colorization       | Visualize cell age or energy levels                            |
 
 ## References
 
@@ -128,8 +126,8 @@ The GPU performs only one draw call per frame.
 - [GLAD OpenGL Loader Generator](https://glad.dav1d.de/)  
   Tool used to generate function loaders for OpenGL 3.3 Core Profile.
 
-- [Nlohmann JSON documentation](https://json.nlohmann.me/)
-  Used JSON parser
+- [Nlohmann JSON documentation](https://json.nlohmann.me/)  
+  Used JSON parser for user configuration. 
 
 - [OpenGL 3.3 Core Specification](https://registry.khronos.org/OpenGL/specs/gl/glspec33.core.pdf)  
   Official Khronos specification describing all API functions and constants used in this project.
