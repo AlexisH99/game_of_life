@@ -1,5 +1,6 @@
 #include <grid_opt.hpp>
 #include <iostream>
+#include <cstdlib>
 
 GridOpt::GridOpt() : rng(std::random_device{}()), dist(0, ~0ULL) {
 
@@ -18,7 +19,6 @@ void GridOpt::initSize(int gridx, int gridy, int bs) {
     mask.resize(rows * words_per_row);
     current.resize(rows * words_per_row);
     next.resize(rows * words_per_row);
-    unpacked.resize(gridX * gridY);
 }
 
 void GridOpt::initMask() {
@@ -120,22 +120,8 @@ std::vector<uint64_t> GridOpt::getMask() {
     return mask;
 }
 
-std::vector<uint8_t> GridOpt::getUnpacked() {
-    return unpacked;
-}
-
-void GridOpt::unpackGrid() {
-    int index = 0;
-    for (int r = 0; r < rows; ++r) {
-        for (int w = 0; w < words_per_row; ++w) {
-            for (int b = 0; b < 64; ++b) {
-                if (mask[r * words_per_row + w] & (1ULL << b)) {
-                    unpacked[index] = (current[r * words_per_row + w] & (1ULL << b) ? 255 : 0);
-                    index++;
-                }
-            }
-        }
-    }
+const uint32_t* GridOpt::getGrid32Ptr() const {
+    return reinterpret_cast<const uint32_t*>(current.data());
 }
 
 void GridOpt::printMask() {

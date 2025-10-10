@@ -214,7 +214,7 @@ void Application::initRender() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32UI,
             grid.words_per_row, grid.rows, 0,
             GL_RG_INTEGER, GL_UNSIGNED_INT,
-            reinterpret_cast<const uint32_t*>(grid.getGrid().data()));
+            grid.getGrid32Ptr());
 }
 
 void Application::mainLoop() {
@@ -226,7 +226,7 @@ void Application::mainLoop() {
     while (!glfwWindowShouldClose(window)) {
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, grid.words_per_row, grid.rows,
-                        GL_RG_INTEGER, GL_UNSIGNED_INT, reinterpret_cast<const uint32_t*>(grid.getGrid().data()));
+                        GL_RG_INTEGER, GL_UNSIGNED_INT, grid.getGrid32Ptr());
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -244,7 +244,7 @@ void Application::mainLoop() {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        //grid.step();
+        grid.step();
 
         double currentTime = glfwGetTime();
         nbFrames++;

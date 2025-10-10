@@ -23,8 +23,7 @@ class GridOpt {
         void printCurrent();
         std::vector<uint64_t> getGrid();
         std::vector<uint64_t> getMask();
-        std::vector<uint8_t> getUnpacked();
-        void unpackGrid();
+        const uint32_t* getGrid32Ptr() const;
         int gridX;
         int gridY;
         int leftpad;
@@ -37,5 +36,4 @@ class GridOpt {
         std::vector<uint64_t> mask;
         std::vector<uint64_t> current;
         std::vector<uint64_t> next;
-        std::vector<uint8_t> unpacked;
 };
