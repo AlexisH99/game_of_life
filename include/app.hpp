@@ -43,7 +43,7 @@ class Application {
 
         unsigned int textureID = 0;
 
-        std::string title = "GOL - FPS: ";
+        std::string title = "GOL";
 
         bool pause = true;
 };
