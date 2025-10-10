@@ -134,7 +134,7 @@ void Application::initShaders() {
             int y = gy + 1;             // saute le padding vertical
             int x = gx + leftpad;       // saute le padding horizontal
 
-            if (gx < 0 || gx >= gridsize.x || gy < 0 || gy >= gridsize.y) {
+            if (gx < 0 || gx >= gridSize.x || gy < 0 || gy >= gridSize.y) {
                 discard;
             }
 
