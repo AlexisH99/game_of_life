@@ -56,6 +56,13 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
     if (app) {
         if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
             app->pause = !app->pause;
+            if (!app->cfg.vsync) {
+                if (app->pause) {
+                    glfwSwapInterval(1);
+                } else {
+                    glfwSwapInterval(0);
+                }
+            }
         }
         if (app->pause && key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
             app->grid.step();
@@ -97,7 +104,7 @@ int Application::initWindow() {
     glfwMakeContextCurrent(window);
     glfwSetWindowUserPointer(window, this);
     glfwSetKeyCallback(window, key_callback);
-    if (cfg.vsync) {
+    if (cfg.vsync || (pause & !cfg.vsync)) {
         glfwSwapInterval(1);
     } else { 
         glfwSwapInterval(0);
