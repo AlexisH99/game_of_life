@@ -1,4 +1,5 @@
 #include "app.hpp"
+
 #include <windows.h>
 #include <iostream>
 #include <cstdlib>
@@ -21,6 +22,60 @@ void checkCompileErrors(unsigned int shader, std::string type) {
             std::cerr << "Erreur link program: " << infoLog << std::endl;
         }
     }
+}
+
+void set_window_icon_from_resource(GLFWwindow* window) {
+    // ID défini dans ton fichier .rc : IDI_APP_ICON
+    HICON hIcon = (HICON)LoadImage(
+        GetModuleHandle(NULL),
+        MAKEINTRESOURCE(IDI_APP_ICON),  // 1 correspond à ton ID d'icône dans gol.rc
+        IMAGE_ICON,
+        0, 0,
+        LR_DEFAULTSIZE
+    );
+
+    if (!hIcon) {
+        std::cerr << "Impossible de charger l'icone depuis la ressource." << std::endl;
+        return;
+    }
+
+    // Extraire le bitmap de l'icône (Windows -> pixels BGRA)
+    ICONINFO iconInfo = {};
+    GetIconInfo(hIcon, &iconInfo);
+
+    BITMAP bmp = {};
+    GetObject(iconInfo.hbmColor, sizeof(BITMAP), &bmp);
+
+    int width = bmp.bmWidth;
+    int height = bmp.bmHeight;
+
+    std::vector<unsigned char> pixels(width * height * 4);
+    GetBitmapBits(iconInfo.hbmColor, width * height * 4, pixels.data());
+
+    // Windows stocke en BGRA + inversé verticalement → on convertit
+    for (int y = 0; y < height / 2; ++y) {
+        for (int x = 0; x < width * 4; ++x) {
+            std::swap(pixels[y * width * 4 + x],
+                      pixels[(height - 1 - y) * width * 4 + x]);
+        }
+    }
+    for (size_t i = 0; i < pixels.size(); i += 4) {
+        std::swap(pixels[i], pixels[i + 2]);  // B <-> R
+    }
+
+    // Créer un GLFWimage
+    GLFWimage img;
+    img.width = width;
+    img.height = height;
+    img.pixels = pixels.data();
+
+    glfwMakeContextCurrent(window);
+    glfwSetWindowIcon(window, 1, &img);
+
+    // Nettoyage GDI
+    DeleteObject(iconInfo.hbmColor);
+    DeleteObject(iconInfo.hbmMask);
+    DestroyIcon(hIcon);
 }
 
 Application::Application() {
@@ -155,6 +210,7 @@ int Application::initWindow() {
         glfwTerminate();
         return -1;
     }
+    set_window_icon_from_resource(window);
     glfwMakeContextCurrent(window);
     set_window_icon_from_resource(window);
     glfwSetWindowUserPointer(window, this);
