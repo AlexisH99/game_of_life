@@ -26,13 +26,35 @@ FetchContent_MakeAvailable(nlohmann_json)
 
 add_subdirectory(external/glad)
 
+execute_process(
+    COMMAND git describe --tags --always --dirty
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_DESCRIBE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+set(VERSION_TAG ${GIT_DESCRIBE})
+configure_file(${CMAKE_SOURCE_DIR}/resources/gol.rc.in
+               ${CMAKE_BINARY_DIR}/gol.rc @ONLY)
+
+set(APP_RC ${CMAKE_BINARY_DIR}/gol.rc)
+set(APP_RES ${CMAKE_BINARY_DIR}/gol.res)
+
+add_custom_command(
+  OUTPUT ${APP_RES}
+  COMMAND ${CMAKE_RC_COMPILER} ${APP_RC} -O coff -o ${APP_RES}
+  DEPENDS ${APP_RC}
+)
+
 add_executable(game_of_life 
     src/main.cpp
     src/app.cpp
     src/grid.cpp
     src/config.cpp
+    ${APP_RES}
 )
 
 target_include_directories(game_of_life PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(game_of_life PRIVATE glfw glad nlohmann_json::nlohmann_json)
 target_compile_options(game_of_life PRIVATE -Wall -Wextra -Wpedantic)
+target_link_options(game_of_life PRIVATE ${APP_RES})

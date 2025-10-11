@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include <windows.h>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -47,6 +48,55 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
         app->cfg.width = width;
         app->cfg.height = height;
     }
+}
+
+void Application::set_window_icon_from_resource(GLFWwindow* window) {
+    HICON hIcon = (HICON)LoadImage(
+        GetModuleHandle(NULL),
+        MAKEINTRESOURCE(IDI_APP_ICON),
+        IMAGE_ICON,
+        0, 0,
+        LR_DEFAULTSIZE
+    );
+
+    if (!hIcon) {
+        std::cerr << "Impossible de charger l'icone depuis la ressource." << std::endl;
+        return;
+    }
+
+    ICONINFO iconInfo = {};
+    GetIconInfo(hIcon, &iconInfo);
+
+    BITMAP bmp = {};
+    GetObject(iconInfo.hbmColor, sizeof(BITMAP), &bmp);
+
+    int width = bmp.bmWidth;
+    int height = bmp.bmHeight;
+
+    std::vector<unsigned char> pixels(width * height * 4);
+    GetBitmapBits(iconInfo.hbmColor, width * height * 4, pixels.data());
+
+    for (int y = 0; y < height / 2; ++y) {
+        for (int x = 0; x < width * 4; ++x) {
+            std::swap(pixels[y * width * 4 + x],
+                      pixels[(height - 1 - y) * width * 4 + x]);
+        }
+    }
+    for (size_t i = 0; i < pixels.size(); i += 4) {
+        std::swap(pixels[i], pixels[i + 2]);  // B <-> R
+    }
+
+    GLFWimage img;
+    img.width = width;
+    img.height = height;
+    img.pixels = pixels.data();
+
+    glfwMakeContextCurrent(window);
+    glfwSetWindowIcon(window, 1, &img);
+
+    DeleteObject(iconInfo.hbmColor);
+    DeleteObject(iconInfo.hbmMask);
+    DestroyIcon(hIcon);
 }
 
 void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int scancode, [[maybe_unused]]int action, [[maybe_unused]]int mods)
@@ -106,6 +156,7 @@ int Application::initWindow() {
         return -1;
     }
     glfwMakeContextCurrent(window);
+    set_window_icon_from_resource(window);
     glfwSetWindowUserPointer(window, this);
     glfwSetKeyCallback(window, key_callback);
     if (cfg.vsync || (pause & !cfg.vsync)) {
