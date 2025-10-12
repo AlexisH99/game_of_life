@@ -46,6 +46,9 @@ add_custom_command(
   DEPENDS ${APP_RC}
 )
 
+set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++ -lpthread")
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+
 add_executable(game_of_life 
     src/main.cpp
     src/app.cpp
