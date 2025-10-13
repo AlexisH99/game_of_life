@@ -47,6 +47,9 @@ game_of_life/
 │ ├── app.hpp # Application class declaration
 │ ├── grid.hpp # Grid class declaration
 │ └── config.hpp # Config class declarations
+├── resources/
+│ ├── gol.rc.in # Application metadata
+│ └── gol.ico # Icon .ico format
 ├── external/
 │ └── glad/ # GLAD 2.0.8 vendored
 └── CMakeLists.txt # Build configuration
