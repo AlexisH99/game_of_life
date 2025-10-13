@@ -3,8 +3,6 @@
 A real-time implementation of Conway’s Game of Life written in modern C++, using GLFW and GLAD.  
 The simulation is computed on the CPU, while visualization is handled on the GPU through an OpenGL texture.
 
----
-
 ## Overview
 
 The program displays a grid of living and dead cells.  
@@ -14,7 +12,16 @@ In real speed:
 
 ![gol_real_speed](https://i.imgur.com/E2rxiD0.gif)
 
----
+## Rules
+
+The number of neighbors is computed according to the Moore neighborhood :
+![moore_neighborhood](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Moore_neighborhood_with_cardinal_directions.svg/375px-Moore_neighborhood_with_cardinal_directions.svg.png)  
+
+| Current State | Live Neighbors | Next State |
+| ------------- | -------------- | ---------- |
+| Alive         | <2 or >3       | Dead       |
+| Alive         | 2 or 3         | Alive      |
+| Dead          | 3              | Alive      |
 
 ## Concept
 
@@ -26,8 +33,6 @@ In real speed:
 - Rendering uses one fullscreen quad drawn with a fragment shader that unpacks and samples the texture using paddings and bitwise operations.
 
 This method avoids heavy instancing, providing excellent performance even for large grids. All computations on CPU are currently monothread.
-
----
 
 ## Project Structure
 
@@ -42,11 +47,13 @@ game_of_life/
 │ ├── app.hpp # Application class declaration
 │ ├── grid.hpp # Grid class declaration
 │ └── config.hpp # Config class declarations
+├── resources/
+│ ├── gol.rc.in # Application metadata
+│ └── gol.ico # Icon .ico format
 ├── external/
 │ └── glad/ # GLAD 2.0.8 vendored
 └── CMakeLists.txt # Build configuration
 ````
----
 
 ## Dependencies
 
@@ -56,9 +63,26 @@ game_of_life/
 - **CMake** – build system  
 - **C++20** - compliant compiler
 
----
+## Requirements
 
-## Building
+- **OpenGL 3.3+ (Core Profile)**  
+  Compatible with all modern GPUs and drivers.  
+  The program requires a graphics card supporting integer textures (`GL_RG32UI`) and GLSL 330 shaders.
+
+### Compatible hardware
+- **CPU :**
+
+Any 64 bit CPU (x86-64)
+
+- **GPU :**
+
+NVIDIA : GeForce 8 series and newer (Tesla architecture, 2006+)  
+AMD/ATI : Radeon HD 4000 series and newer (2008+)  
+Intel : HD Graphics 2000 series and newer (2011+) 
+
+Some older GPUs (AMD HD 2000–3000, Intel HD first gen) may not fully support `GL_RG32UI`. 
+
+## Building - x86-64 Windows only (for now)
 
 ### 1. Clone the repository
 
@@ -86,14 +110,6 @@ cmake --build build
 ./build/game_of_life
 ```
 
-## Rules
-
-| Current State | Live Neighbors | Next State |
-| ------------- | -------------- | ---------- |
-| Alive         | <2 or >3       | Dead       |
-| Alive         | 2 or 3         | Alive      |
-| Dead          | 3              | Alive      |
-
 ## Performance
 
 Performed on Ryzen 5 9600X + GTX 980 Ti
@@ -106,11 +122,13 @@ Performed on Ryzen 5 9600X + GTX 980 Ti
 Performance is now limited by rendering for small grids < 1000x1000. Then large grids > 5000x5000 are CPU limited.
 A i7-6700HQ GTX960M laptop runs a 2000x2000 grid at ~950 fps on this dev branch, to be tested and released on v1.1.0.
 
-## Possible improvements
+## Planned features
 
-| Goal               | Description                                                    |
-| ------------------ | -------------------------------------------------------------- |
-| Persistence        | Save/load grid states (RLE, JSON, PNG)                         |
+- Save/Load grid from .bin or/and .png
+- Zoom/Dezoom on the grid (Wheel for zoom/dezoom, mouse to move)
+- Grid editor
+- Command line interface (Lua)
+- Generalized rules for Moore neighborhood
 
 ## References
 
@@ -126,11 +144,11 @@ A i7-6700HQ GTX960M laptop runs a 2000x2000 grid at ~950 fps on this dev branch,
 - [GLAD OpenGL Loader Generator](https://glad.dav1d.de/)  
   Tool used to generate function loaders for OpenGL 3.3 Core Profile.
 
-- [Nlohmann JSON documentation](https://json.nlohmann.me/)  
-  Used JSON parser for user configuration. 
-
 - [OpenGL 3.3 Core Specification](https://registry.khronos.org/OpenGL/specs/gl/glspec33.core.pdf)  
   Official Khronos specification describing all API functions and constants used in this project.
+  
+- [Nlohmann JSON documentation](https://json.nlohmann.me/)  
+  Used JSON parser for user configuration. 
 
 - [CMake Documentation](https://cmake.org/documentation/)  
   Official CMake reference for build configuration and compiler settings.

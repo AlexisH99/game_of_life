@@ -5,7 +5,8 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-void framebuffer_size_callback([[maybe_unused]]GLFWwindow* window, int width, int height);
+#define IDI_APP_ICON 101
+
 void checkCompileErrors(unsigned int shader, std::string type);
 
 class Application {
@@ -18,6 +19,8 @@ class Application {
         static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
     private:
+        void set_window_icon_from_resource(GLFWwindow* window);
+
         void loadConfig();
         void initGrid();
         int initWindow();

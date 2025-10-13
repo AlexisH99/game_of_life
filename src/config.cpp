@@ -14,10 +14,10 @@ Config::~Config() {
 void Config::initConfig(const std::string& p) {
     path = p;
     if (!std::filesystem::exists(path)) {
-        std::cout << "No config.json found. Creating default one..." << std::endl;
+        std::cout << "No config.jsonc found. Creating default one..." << std::endl;
         saveConfig(path);
     } else {
-        std::cout << "Loading existing config.json..." << std::endl;
+        std::cout << "Loading existing config.jsonc..." << std::endl;
         try {
             loadConfig(path);
         } catch (const std::exception& e) {
@@ -46,8 +46,20 @@ void Config::saveConfig(const std::string& path) {
         }}
     };
 
+    std::stringstream ss;
+    ss << std::setw(4) << j;
+    std::string out = ss.str();
+    out = R"(// === GAME OF LIFE CONFIG ===
+// - debug.checker          : checkerboard grid initialization
+// - debug.showfps          : fps counter in window bar
+// - display.freezeatstart  : paused simulation at start
+// - display.vsync          : vertical synchronization with the screen
+// - grid.gridx / gridy     : grid size in horizontal (x) and vertical (y) directions
+// - window.width / height    : window size
+// Changes needs restart of the application
+)" + out;
     std::ofstream ofs(path);
-    ofs << std::setw(4) << j << std::endl;
+    ofs << out;
     std::cout << "Created default config: " << path << std::endl;
 }
 
@@ -57,8 +69,13 @@ void Config::loadConfig(const std::string& path) {
     if (!ifs)
         throw std::runtime_error("Cannot open config file.");
 
-    json j;
-    ifs >> j;
+    std::string line;
+    std::stringstream buffer;
+    while (std::getline(ifs, line)) {
+        if (!line.starts_with("//")) buffer << line << "\n";
+    }
+
+    json j = json::parse(buffer, nullptr, true, true);
 
     if (j.contains("window")) {
         auto& w = j["window"];
@@ -122,9 +139,18 @@ void Config::printAllParams() const {
         return;
     }
 
-    json j;
-    ifs >> j;
+    std::string line;
+    std::stringstream buffer;
+    while (std::getline(ifs, line)) {
+        if (!line.starts_with("//")) buffer << line << "\n";
+    }
+
+    json j = json::parse(buffer, nullptr, true, true);
+
     std::cout << "=== CONFIGURATION PARAMETERS ===\n";
     printJsonRecursive(j, 0);
+    std::cout << "========= KEY BINDINGS =========\n";
+    std::cout << "Pause/unpause simulation  : Space\n";
+    std::cout << "One time step             : Right arrow\n";
     std::cout << "================================\n";
 }

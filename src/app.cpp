@@ -1,4 +1,6 @@
 #include "app.hpp"
+
+#include <windows.h>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -49,6 +51,55 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
     }
 }
 
+void Application::set_window_icon_from_resource(GLFWwindow* window) {
+    HICON hIcon = (HICON)LoadImage(
+        GetModuleHandle(NULL),
+        MAKEINTRESOURCE(IDI_APP_ICON),
+        IMAGE_ICON,
+        0, 0,
+        LR_DEFAULTSIZE
+    );
+
+    if (!hIcon) {
+        std::cerr << "Cannot load resource from executable" << std::endl;
+        return;
+    }
+
+    ICONINFO iconInfo = {};
+    GetIconInfo(hIcon, &iconInfo);
+
+    BITMAP bmp = {};
+    GetObject(iconInfo.hbmColor, sizeof(BITMAP), &bmp);
+
+    int width = bmp.bmWidth;
+    int height = bmp.bmHeight;
+
+    std::vector<unsigned char> pixels(width * height * 4);
+    GetBitmapBits(iconInfo.hbmColor, width * height * 4, pixels.data());
+
+    for (int y = 0; y < height / 2; ++y) {
+        for (int x = 0; x < width * 4; ++x) {
+            std::swap(pixels[y * width * 4 + x],
+                      pixels[(height - 1 - y) * width * 4 + x]);
+        }
+    }
+    for (size_t i = 0; i < pixels.size(); i += 4) {
+        std::swap(pixels[i], pixels[i + 2]);  // B <-> R
+    }
+
+    GLFWimage img;
+    img.width = width;
+    img.height = height;
+    img.pixels = pixels.data();
+
+    glfwMakeContextCurrent(window);
+    glfwSetWindowIcon(window, 1, &img);
+
+    DeleteObject(iconInfo.hbmColor);
+    DeleteObject(iconInfo.hbmMask);
+    DestroyIcon(hIcon);
+}
+
 void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int scancode, [[maybe_unused]]int action, [[maybe_unused]]int mods)
 {   
     Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
@@ -71,7 +122,7 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
 }
 
 void Application::loadConfig() {
-    cfg.initConfig("config.json");
+    cfg.initConfig("config.jsonc");
     cfg.printAllParams();
     pause = cfg.freeze_at_start;
     if (cfg.width < 120) {
@@ -92,22 +143,25 @@ void Application::initGrid() {
 
 int Application::initWindow() {
     if (!glfwInit()) {
-        std::cerr << "Erreur init GLFW !" << std::endl;
+        std::cerr << "Error GFLW init" << std::endl;
         return -1;
     }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     window = glfwCreateWindow(cfg.width, cfg.height, title.c_str(), nullptr, nullptr);
     if (!window) {
-        std::cerr << "Erreur création fenêtre !" << std::endl;
+        std::cerr << "Error window creation" << std::endl;
         glfwTerminate();
         return -1;
     }
+
     glfwMakeContextCurrent(window);
+    set_window_icon_from_resource(window);
     glfwSetWindowUserPointer(window, this);
     glfwSetKeyCallback(window, key_callback);
+    
     if (cfg.vsync || (pause & !cfg.vsync)) {
         glfwSwapInterval(1);
     } else { 
@@ -119,9 +173,17 @@ int Application::initWindow() {
 
 int Application::initGlad() {
     if (!gladLoadGL(glfwGetProcAddress)) {
-        std::cerr << "Erreur init GLAD !" << std::endl;
+        std::cerr << "Error GLAD init" << std::endl;
         return -1;
     }
+
+    const GLubyte* version = glGetString(GL_VERSION);
+    std::cout << "OpenGL version: " << version << std::endl;
+    if (!GLAD_GL_VERSION_3_3) throw std::runtime_error("OpenGL 3.3 or higher required.");
+
+    GLint supported = 0;
+    glGetInternalformativ(GL_TEXTURE_2D, GL_RG32UI, GL_INTERNALFORMAT_SUPPORTED, 1, &supported);
+    if (!supported) throw std::runtime_error("GL_RG32UI not supported on this GPU.");
 
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     glViewport(0, 0, fbWidth, fbHeight);
@@ -132,7 +194,8 @@ int Application::initGlad() {
 
 void Application::initShaders() {
     vertexShaderSource = R"(
-        #version 430 core
+        #version 330 core
+
         layout (location = 0) in vec2 aPos;
         layout (location = 1) in vec2 aTexCoord;
 
@@ -145,9 +208,9 @@ void Application::initShaders() {
     )";
 
     fragmentShaderSource = R"(
-        #version 430 core
-        layout(binding = 0) uniform usampler2D packedGrid;
+        #version 330 core
 
+        uniform usampler2D packedGrid;  // plus de layout(binding)
         uniform int leftpad;
         uniform vec2 windowSize;
         uniform vec2 gridSize;
@@ -155,28 +218,27 @@ void Application::initShaders() {
         out vec4 FragColor;
 
         void main() {
-            vec2 frag = (gl_FragCoord.xy - vec2(0.5));
+            vec2 frag = gl_FragCoord.xy - vec2(0.5);
 
             int gx = int(frag.x * (gridSize.x / windowSize.x));
             int gy = int(frag.y * (gridSize.y / windowSize.y));
 
+            if (gx < 0 || gx >= int(gridSize.x) || gy < 0 || gy >= int(gridSize.y))
+                discard;
+
             int y = gy + 1;
             int x = gx + leftpad;
-
-            if (gx < 0 || gx >= gridSize.x || gy < 0 || gy >= gridSize.y) {
-                discard;
-            }
 
             int word_index = x / 64;
             int bit_index  = x % 64;
 
-            uvec2 wordpair = texelFetch(packedGrid, ivec2(word_index, y), 0).rg;
-            uint low  = wordpair.r;
-            uint high = wordpair.g;
+            uvec4 texel = texelFetch(packedGrid, ivec2(word_index, y), 0);
+            uint low  = texel.r;
+            uint high = texel.g;
 
             uint alive = (bit_index < 32)
-                    ? ((low >> bit_index) & 1u)
-                    : ((high >> (bit_index - 32)) & 1u);
+                ? ((low >> bit_index) & 1u)
+                : ((high >> (bit_index - 32)) & 1u);
 
             float val = float(alive);
             FragColor = vec4(val, val, val, 1.0);
@@ -260,8 +322,11 @@ void Application::mainLoop() {
 
         glClearColor(1.0f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
+        
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID);
         glUseProgram(shaderProgram);
+        glUniform1i(glGetUniformLocation(shaderProgram, "packedGrid"), 0);
         glUniform1i(glGetUniformLocation(shaderProgram, "leftpad"), grid.leftpad);
         glUniform2f(glGetUniformLocation(shaderProgram, "windowSize"), cfg.width, cfg.height);
         glUniform2f(glGetUniformLocation(shaderProgram, "gridSize"), cfg.gridx, cfg.gridy);
