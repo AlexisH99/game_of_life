@@ -176,7 +176,7 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
 }
 
 void Application::loadConfig() {
-    cfg.initConfig("config.json");
+    cfg.initConfig("config.jsonc");
     cfg.printAllParams();
     pause = cfg.freeze_at_start;
     if (cfg.width < 120) {

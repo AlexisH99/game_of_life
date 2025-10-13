@@ -46,8 +46,20 @@ void Config::saveConfig(const std::string& path) {
         }}
     };
 
+    std::stringstream ss;
+    ss << std::setw(4) << j;
+    std::string out = ss.str();
+    out = R"(// === GAME OF LIFE CONFIG ===
+// - debug.checker          : checkerboard grid initialization
+// - debug.showfps          : fps counter in window bar
+// - display.freezeatstart  : paused simulation at start
+// - display.vsync          : vertical synchronization with the screen
+// - grid.gridx / gridy     : grid size in horizontal (x) and vertical (y) directions
+// - window.width/height    : window size
+// Changes needs restart of the application
+)" + out;
     std::ofstream ofs(path);
-    ofs << std::setw(4) << j << std::endl;
+    ofs << out;
     std::cout << "Created default config: " << path << std::endl;
 }
 
@@ -57,8 +69,13 @@ void Config::loadConfig(const std::string& path) {
     if (!ifs)
         throw std::runtime_error("Cannot open config file.");
 
-    json j;
-    ifs >> j;
+    std::string line;
+    std::stringstream buffer;
+    while (std::getline(ifs, line)) {
+        if (!line.starts_with("//")) buffer << line << "\n";
+    }
+
+    json j = json::parse(buffer, nullptr, true, true);
 
     if (j.contains("window")) {
         auto& w = j["window"];
@@ -122,8 +139,14 @@ void Config::printAllParams() const {
         return;
     }
 
-    json j;
-    ifs >> j;
+    std::string line;
+    std::stringstream buffer;
+    while (std::getline(ifs, line)) {
+        if (!line.starts_with("//")) buffer << line << "\n";
+    }
+
+    json j = json::parse(buffer, nullptr, true, true);
+
     std::cout << "=== CONFIGURATION PARAMETERS ===\n";
     printJsonRecursive(j, 0);
     std::cout << "================================\n";
