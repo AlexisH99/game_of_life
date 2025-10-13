@@ -181,6 +181,10 @@ int Application::initGlad() {
     std::cout << "OpenGL version: " << version << std::endl;
     if (!GLAD_GL_VERSION_3_3) throw std::runtime_error("OpenGL 3.3 or higher required.");
 
+    GLint supported = 0;
+    glGetInternalformativ(GL_TEXTURE_2D, GL_RG32UI, GL_INTERNALFORMAT_SUPPORTED, 1, &supported);
+    if (!supported) throw std::runtime_error("GL_RG32UI not supported on this GPU.");
+
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     glViewport(0, 0, fbWidth, fbHeight);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
