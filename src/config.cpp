@@ -55,7 +55,7 @@ void Config::saveConfig(const std::string& path) {
 // - display.freezeatstart  : paused simulation at start
 // - display.vsync          : vertical synchronization with the screen
 // - grid.gridx / gridy     : grid size in horizontal (x) and vertical (y) directions
-// - window.width/height    : window size
+// - window.width / height    : window size
 // Changes needs restart of the application
 )" + out;
     std::ofstream ofs(path);
