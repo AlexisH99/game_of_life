@@ -24,60 +24,6 @@ void checkCompileErrors(unsigned int shader, std::string type) {
     }
 }
 
-void set_window_icon_from_resource(GLFWwindow* window) {
-    // ID défini dans ton fichier .rc : IDI_APP_ICON
-    HICON hIcon = (HICON)LoadImage(
-        GetModuleHandle(NULL),
-        MAKEINTRESOURCE(IDI_APP_ICON),  // 1 correspond à ton ID d'icône dans gol.rc
-        IMAGE_ICON,
-        0, 0,
-        LR_DEFAULTSIZE
-    );
-
-    if (!hIcon) {
-        std::cerr << "Impossible de charger l'icone depuis la ressource." << std::endl;
-        return;
-    }
-
-    // Extraire le bitmap de l'icône (Windows -> pixels BGRA)
-    ICONINFO iconInfo = {};
-    GetIconInfo(hIcon, &iconInfo);
-
-    BITMAP bmp = {};
-    GetObject(iconInfo.hbmColor, sizeof(BITMAP), &bmp);
-
-    int width = bmp.bmWidth;
-    int height = bmp.bmHeight;
-
-    std::vector<unsigned char> pixels(width * height * 4);
-    GetBitmapBits(iconInfo.hbmColor, width * height * 4, pixels.data());
-
-    // Windows stocke en BGRA + inversé verticalement → on convertit
-    for (int y = 0; y < height / 2; ++y) {
-        for (int x = 0; x < width * 4; ++x) {
-            std::swap(pixels[y * width * 4 + x],
-                      pixels[(height - 1 - y) * width * 4 + x]);
-        }
-    }
-    for (size_t i = 0; i < pixels.size(); i += 4) {
-        std::swap(pixels[i], pixels[i + 2]);  // B <-> R
-    }
-
-    // Créer un GLFWimage
-    GLFWimage img;
-    img.width = width;
-    img.height = height;
-    img.pixels = pixels.data();
-
-    glfwMakeContextCurrent(window);
-    glfwSetWindowIcon(window, 1, &img);
-
-    // Nettoyage GDI
-    DeleteObject(iconInfo.hbmColor);
-    DeleteObject(iconInfo.hbmMask);
-    DestroyIcon(hIcon);
-}
-
 Application::Application() {
 
 }
@@ -115,7 +61,7 @@ void Application::set_window_icon_from_resource(GLFWwindow* window) {
     );
 
     if (!hIcon) {
-        std::cerr << "Impossible de charger l'icone depuis la ressource." << std::endl;
+        std::cerr << "Cannot load resource from executable" << std::endl;
         return;
     }
 
@@ -197,7 +143,7 @@ void Application::initGrid() {
 
 int Application::initWindow() {
     if (!glfwInit()) {
-        std::cerr << "Erreur init GLFW !" << std::endl;
+        std::cerr << "Error GFLW init" << std::endl;
         return -1;
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -206,7 +152,7 @@ int Application::initWindow() {
 
     window = glfwCreateWindow(cfg.width, cfg.height, title.c_str(), nullptr, nullptr);
     if (!window) {
-        std::cerr << "Erreur création fenêtre !" << std::endl;
+        std::cerr << "Error window creation" << std::endl;
         glfwTerminate();
         return -1;
     }
@@ -226,7 +172,7 @@ int Application::initWindow() {
 
 int Application::initGlad() {
     if (!gladLoadGL(glfwGetProcAddress)) {
-        std::cerr << "Erreur init GLAD !" << std::endl;
+        std::cerr << "Error GLAD init" << std::endl;
         return -1;
     }
 

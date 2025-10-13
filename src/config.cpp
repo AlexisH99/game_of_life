@@ -14,10 +14,10 @@ Config::~Config() {
 void Config::initConfig(const std::string& p) {
     path = p;
     if (!std::filesystem::exists(path)) {
-        std::cout << "No config.json found. Creating default one..." << std::endl;
+        std::cout << "No config.jsonc found. Creating default one..." << std::endl;
         saveConfig(path);
     } else {
-        std::cout << "Loading existing config.json..." << std::endl;
+        std::cout << "Loading existing config.jsonc..." << std::endl;
         try {
             loadConfig(path);
         } catch (const std::exception& e) {

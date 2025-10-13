@@ -7,9 +7,7 @@
 
 #define IDI_APP_ICON 101
 
-void framebuffer_size_callback([[maybe_unused]]GLFWwindow* window, int width, int height);
 void checkCompileErrors(unsigned int shader, std::string type);
-void set_window_icon_from_resource(GLFWwindow* window);
 
 class Application {
     public:
