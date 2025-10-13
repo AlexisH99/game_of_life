@@ -69,9 +69,11 @@ Any 64 bit CPU (x86-64)
 
 - **GPU :**
 
-NVIDIA : GeForce GTX 400 series and newer (Fermi architecture, 2010+)  
-AMD : Radeon HD 5000 series and newer (TeraScale 2 architecture, 2009+)  
-Intel : HD Graphics 4000 and newer (Ivy Bridge architecture, 2012+)
+NVIDIA : GeForce 8 series and newer (Tesla architecture, 2006+)  
+AMD/ATI : Radeon HD 4000 series and newer (2008+)  
+Intel : HD Graphics 2000 series and newer (2011+) 
+
+Some older GPUs (AMD HD 2000–3000, Intel HD first gen) may not fully support `GL_RG32UI`. 
 
 ---
 
