@@ -56,9 +56,26 @@ game_of_life/
 - **CMake** – build system  
 - **C++20** - compliant compiler
 
+## Requirements
+
+- **OpenGL 3.3+ (Core Profile)**  
+  Compatible with all modern GPUs and drivers.  
+  The program requires a graphics card supporting integer textures (`GL_RG32UI`) and GLSL 330 shaders.
+
+### Compatible hardware
+- **CPU :**
+
+Any 64 bit CPU (x86-64)
+
+- **GPU :**
+
+NVIDIA : GeForce GTX 400 series and newer (Fermi architecture, 2010+)  
+AMD : Radeon HD 5000 series and newer (TeraScale 2 architecture, 2009+)  
+Intel : HD Graphics 4000 and newer (Ivy Bridge architecture, 2012+)
+
 ---
 
-## Building
+## Building - x86-64 Windows only (for now)
 
 ### 1. Clone the repository
 
@@ -126,11 +143,11 @@ A i7-6700HQ GTX960M laptop runs a 2000x2000 grid at ~950 fps on this dev branch,
 - [GLAD OpenGL Loader Generator](https://glad.dav1d.de/)  
   Tool used to generate function loaders for OpenGL 3.3 Core Profile.
 
-- [Nlohmann JSON documentation](https://json.nlohmann.me/)  
-  Used JSON parser for user configuration. 
-
 - [OpenGL 3.3 Core Specification](https://registry.khronos.org/OpenGL/specs/gl/glspec33.core.pdf)  
   Official Khronos specification describing all API functions and constants used in this project.
+  
+- [Nlohmann JSON documentation](https://json.nlohmann.me/)  
+  Used JSON parser for user configuration. 
 
 - [CMake Documentation](https://cmake.org/documentation/)  
   Official CMake reference for build configuration and compiler settings.
