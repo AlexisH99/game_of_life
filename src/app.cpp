@@ -146,7 +146,7 @@ int Application::initWindow() {
         std::cerr << "Error GFLW init" << std::endl;
         return -1;
     }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -176,6 +176,10 @@ int Application::initGlad() {
         return -1;
     }
 
+    const GLubyte* version = glGetString(GL_VERSION);
+    std::cout << "OpenGL version: " << version << std::endl;
+    if (!GLAD_GL_VERSION_3_3) throw std::runtime_error("OpenGL 3.3 or higher required.");
+
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     glViewport(0, 0, fbWidth, fbHeight);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -185,7 +189,8 @@ int Application::initGlad() {
 
 void Application::initShaders() {
     vertexShaderSource = R"(
-        #version 430 core
+        #version 330 core
+
         layout (location = 0) in vec2 aPos;
         layout (location = 1) in vec2 aTexCoord;
 
@@ -198,9 +203,9 @@ void Application::initShaders() {
     )";
 
     fragmentShaderSource = R"(
-        #version 430 core
-        layout(binding = 0) uniform usampler2D packedGrid;
+        #version 330 core
 
+        uniform usampler2D packedGrid;  // plus de layout(binding)
         uniform int leftpad;
         uniform vec2 windowSize;
         uniform vec2 gridSize;
@@ -208,28 +213,27 @@ void Application::initShaders() {
         out vec4 FragColor;
 
         void main() {
-            vec2 frag = (gl_FragCoord.xy - vec2(0.5));
+            vec2 frag = gl_FragCoord.xy - vec2(0.5);
 
             int gx = int(frag.x * (gridSize.x / windowSize.x));
             int gy = int(frag.y * (gridSize.y / windowSize.y));
 
+            if (gx < 0 || gx >= int(gridSize.x) || gy < 0 || gy >= int(gridSize.y))
+                discard;
+
             int y = gy + 1;
             int x = gx + leftpad;
-
-            if (gx < 0 || gx >= gridSize.x || gy < 0 || gy >= gridSize.y) {
-                discard;
-            }
 
             int word_index = x / 64;
             int bit_index  = x % 64;
 
-            uvec2 wordpair = texelFetch(packedGrid, ivec2(word_index, y), 0).rg;
-            uint low  = wordpair.r;
-            uint high = wordpair.g;
+            uvec4 texel = texelFetch(packedGrid, ivec2(word_index, y), 0);
+            uint low  = texel.r;
+            uint high = texel.g;
 
             uint alive = (bit_index < 32)
-                    ? ((low >> bit_index) & 1u)
-                    : ((high >> (bit_index - 32)) & 1u);
+                ? ((low >> bit_index) & 1u)
+                : ((high >> (bit_index - 32)) & 1u);
 
             float val = float(alive);
             FragColor = vec4(val, val, val, 1.0);
@@ -313,8 +317,11 @@ void Application::mainLoop() {
 
         glClearColor(1.0f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
+        
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID);
         glUseProgram(shaderProgram);
+        glUniform1i(glGetUniformLocation(shaderProgram, "packedGrid"), 0);
         glUniform1i(glGetUniformLocation(shaderProgram, "leftpad"), grid.leftpad);
         glUniform2f(glGetUniformLocation(shaderProgram, "windowSize"), cfg.width, cfg.height);
         glUniform2f(glGetUniformLocation(shaderProgram, "gridSize"), cfg.gridx, cfg.gridy);
