@@ -149,5 +149,8 @@ void Config::printAllParams() const {
 
     std::cout << "=== CONFIGURATION PARAMETERS ===\n";
     printJsonRecursive(j, 0);
+    std::cout << "========= KEY BINDINGS =========\n";
+    std::cout << "Pause/unpause simulation  : Space\n";
+    std::cout << "One time step             : Right arrow\n";
     std::cout << "================================\n";
 }
