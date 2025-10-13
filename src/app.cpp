@@ -156,11 +156,12 @@ int Application::initWindow() {
         glfwTerminate();
         return -1;
     }
-    set_window_icon_from_resource(window);
+
     glfwMakeContextCurrent(window);
     set_window_icon_from_resource(window);
     glfwSetWindowUserPointer(window, this);
     glfwSetKeyCallback(window, key_callback);
+    
     if (cfg.vsync || (pause & !cfg.vsync)) {
         glfwSwapInterval(1);
     } else { 
