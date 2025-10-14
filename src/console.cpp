@@ -75,7 +75,7 @@ void Console::log(const std::string& s) {
 void Console::draw(GLFWwindow* window) {
     if (!visible) return;
     Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
-    glUseProgram(app->shaders.consoleShader);
+    glUseProgram(app->shaders.consoleShader.program);
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -96,8 +96,8 @@ void Console::draw(GLFWwindow* window) {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
 
-    glUniform2f(glGetUniformLocation(app->shaders.consoleShader, "uScreen"), (float)fbWidth, (float)fbHeight);
-    glUniform4f(glGetUniformLocation(app->shaders.consoleShader, "uColor"), 0.0f, 0.0f, 0.15f, 0.75f);
+    glUniform2f(glGetUniformLocation(app->shaders.consoleShader.program, "uScreen"), (float)fbWidth, (float)fbHeight);
+    glUniform4f(glGetUniformLocation(app->shaders.consoleShader.program, "uColor"), 0.0f, 0.0f, 0.15f, 0.75f);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // === texte vert ===
@@ -114,7 +114,7 @@ void Console::draw(GLFWwindow* window) {
     appendText(pts, 10, cHeight - lineHeight, "> " + input + "_");
 
     glBufferData(GL_ARRAY_BUFFER, pts.size() * sizeof(float), pts.data(), GL_STREAM_DRAW);
-    glUniform4f(glGetUniformLocation(app->shaders.consoleShader, "uColor"), 0.0f, 1.0f, 0.0f, 1.0f);
+    glUniform4f(glGetUniformLocation(app->shaders.consoleShader.program, "uColor"), 0.0f, 1.0f, 0.0f, 1.0f);
     glDrawArrays(GL_POINTS, 0, pts.size()/2);
 
     glDisable(GL_BLEND);

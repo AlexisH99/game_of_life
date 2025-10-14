@@ -11,9 +11,14 @@ class Shaders {
 
         unsigned int compileShader(GLenum type, const char* src);
         unsigned int linkProgram(unsigned int vert, unsigned int frag);
+
+        struct ShaderProgram {
+            GLuint program = 0;
+            ~ShaderProgram() { if (program) glDeleteProgram(program); }
+        };
         
-        unsigned int mainShader = 0;
-        unsigned int consoleShader = 0;
+        ShaderProgram mainShader, consoleShader;
+        
     private:
         unsigned int mainVertShader = 0;
         unsigned int mainFragShader = 0;

@@ -3,13 +3,12 @@
 #include <string>
 #include <iostream>
 
-
 Shaders::Shaders() {
+
 }
 
 Shaders::~Shaders() {
-    glDeleteShader(mainShader);
-    glDeleteProgram(consoleShader);
+
 }
 
 void Shaders::init(GLFWwindow* window) {
@@ -17,13 +16,13 @@ void Shaders::init(GLFWwindow* window) {
     gladLoadGL(glfwGetProcAddress);
     mainVertShader = compileShader(GL_VERTEX_SHADER, mainVert);
     mainFragShader = compileShader(GL_FRAGMENT_SHADER, mainFrag);
-    mainShader = linkProgram(mainVertShader, mainFragShader);
+    mainShader.program = linkProgram(mainVertShader, mainFragShader);
     glDeleteShader(mainVertShader);
     glDeleteShader(mainFragShader);
 
     consoleVertShader = compileShader(GL_VERTEX_SHADER, consoleVert);
     consoleFragShader = compileShader(GL_FRAGMENT_SHADER, consoleFrag);
-    consoleShader = linkProgram(consoleVertShader, consoleFragShader);
+    consoleShader.program = linkProgram(consoleVertShader, consoleFragShader);
     glDeleteShader(consoleVertShader);
     glDeleteShader(consoleFragShader);
 }

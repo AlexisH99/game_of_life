@@ -256,11 +256,11 @@ void Application::mainLoop() {
         
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glUseProgram(shaders.mainShader);
-        glUniform1i(glGetUniformLocation(shaders.mainShader, "packedGrid"), 0);
-        glUniform1i(glGetUniformLocation(shaders.mainShader, "leftpad"), grid.leftpad);
-        glUniform2f(glGetUniformLocation(shaders.mainShader, "windowSize"), cfg.width, cfg.height);
-        glUniform2f(glGetUniformLocation(shaders.mainShader, "gridSize"), cfg.gridx, cfg.gridy);
+        glUseProgram(shaders.mainShader.program);
+        glUniform1i(glGetUniformLocation(shaders.mainShader.program, "packedGrid"), 0);
+        glUniform1i(glGetUniformLocation(shaders.mainShader.program, "leftpad"), grid.leftpad);
+        glUniform2f(glGetUniformLocation(shaders.mainShader.program, "windowSize"), cfg.width, cfg.height);
+        glUniform2f(glGetUniformLocation(shaders.mainShader.program, "gridSize"), cfg.gridx, cfg.gridy);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         
