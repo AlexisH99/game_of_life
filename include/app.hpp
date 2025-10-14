@@ -1,13 +1,12 @@
 #pragma once
 
 #include "grid.hpp"
+#include "shader.hpp"
 #include "config.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
 #define IDI_APP_ICON 101
-
-void checkCompileErrors(unsigned int shader, std::string type);
 
 class Application {
     public:
@@ -18,6 +17,8 @@ class Application {
         static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
         static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
+        Shaders shaders;
+
     private:
         void set_window_icon_from_resource(GLFWwindow* window);
 
@@ -25,7 +26,6 @@ class Application {
         void initGrid();
         int initWindow();
         int initGlad();
-        void initShaders();
         void initRender();
         void mainLoop();
         void cleanup();
@@ -33,15 +33,8 @@ class Application {
         Config cfg;
         Grid grid;
         GLFWwindow* window = nullptr;
-        
-        const char* vertexShaderSource = nullptr;
-        const char* fragmentShaderSource = nullptr;
 
         int fbWidth, fbHeight;
-
-        unsigned int vertexShader = 0;
-        unsigned int fragmentShader = 0;
-        unsigned int shaderProgram = 0;
 
         unsigned int VBO = 0, VAO = 0;
 

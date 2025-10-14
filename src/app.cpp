@@ -6,24 +6,6 @@
 #include <vector>
 #include <format>
 
-void checkCompileErrors(unsigned int shader, std::string type) {
-    int success;
-    char infoLog[512];
-    if (type != "PROGRAM") {
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(shader, 512, NULL, infoLog);
-            std::cerr << "Erreur compilation shader (" << type << "): " << infoLog << std::endl;
-        }
-    } else {
-        glGetProgramiv(shader, GL_LINK_STATUS, &success);
-        if (!success) {
-            glGetProgramInfoLog(shader, 512, NULL, infoLog);
-            std::cerr << "Erreur link program: " << infoLog << std::endl;
-        }
-    }
-}
-
 Application::Application() {
 
 }
@@ -36,8 +18,8 @@ void Application::run() {
     loadConfig();
     initGrid();
     initWindow();
+    shaders.init(window);
     initGlad();
-    initShaders();
     initRender();
     mainLoop();
 }
@@ -192,79 +174,7 @@ int Application::initGlad() {
     return 0;
 }
 
-void Application::initShaders() {
-    vertexShaderSource = R"(
-        #version 330 core
 
-        layout (location = 0) in vec2 aPos;
-        layout (location = 1) in vec2 aTexCoord;
-
-        out vec2 TexCoord;
-
-        void main() {
-            gl_Position = vec4(aPos, 0.0, 1.0);
-            TexCoord = aTexCoord;
-        }
-    )";
-
-    fragmentShaderSource = R"(
-        #version 330 core
-
-        uniform usampler2D packedGrid;  // plus de layout(binding)
-        uniform int leftpad;
-        uniform vec2 windowSize;
-        uniform vec2 gridSize;
-
-        out vec4 FragColor;
-
-        void main() {
-            vec2 frag = gl_FragCoord.xy - vec2(0.5);
-
-            int gx = int(frag.x * (gridSize.x / windowSize.x));
-            int gy = int(frag.y * (gridSize.y / windowSize.y));
-
-            if (gx < 0 || gx >= int(gridSize.x) || gy < 0 || gy >= int(gridSize.y))
-                discard;
-
-            int y = gy + 1;
-            int x = gx + leftpad;
-
-            int word_index = x / 64;
-            int bit_index  = x % 64;
-
-            uvec4 texel = texelFetch(packedGrid, ivec2(word_index, y), 0);
-            uint low  = texel.r;
-            uint high = texel.g;
-
-            uint alive = (bit_index < 32)
-                ? ((low >> bit_index) & 1u)
-                : ((high >> (bit_index - 32)) & 1u);
-
-            float val = float(alive);
-            FragColor = vec4(val, val, val, 1.0);
-        }
-    )";
-
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    shaderProgram = glCreateProgram();
-
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    checkCompileErrors(vertexShader, "VERTEX");
-
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    checkCompileErrors(fragmentShader, "FRAGMENT");
-
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    checkCompileErrors(shaderProgram, "PROGRAM");
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-}
 
 void Application::initRender() {
     float vertices[] = {
@@ -325,11 +235,11 @@ void Application::mainLoop() {
         
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glUseProgram(shaderProgram);
-        glUniform1i(glGetUniformLocation(shaderProgram, "packedGrid"), 0);
-        glUniform1i(glGetUniformLocation(shaderProgram, "leftpad"), grid.leftpad);
-        glUniform2f(glGetUniformLocation(shaderProgram, "windowSize"), cfg.width, cfg.height);
-        glUniform2f(glGetUniformLocation(shaderProgram, "gridSize"), cfg.gridx, cfg.gridy);
+        glUseProgram(shaders.mainShader);
+        glUniform1i(glGetUniformLocation(shaders.mainShader, "packedGrid"), 0);
+        glUniform1i(glGetUniformLocation(shaders.mainShader, "leftpad"), grid.leftpad);
+        glUniform2f(glGetUniformLocation(shaders.mainShader, "windowSize"), cfg.width, cfg.height);
+        glUniform2f(glGetUniformLocation(shaders.mainShader, "gridSize"), cfg.gridx, cfg.gridy);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -358,7 +268,6 @@ void Application::mainLoop() {
 void Application::cleanup() {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram);
     glfwDestroyWindow(window);
     glfwTerminate();
 }
