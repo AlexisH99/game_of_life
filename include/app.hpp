@@ -19,8 +19,6 @@ class Application {
         static void char_callback(GLFWwindow* window, unsigned int codepoint);
         static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-        Shaders shaders;
-
     private:
         void set_window_icon_from_resource(GLFWwindow* window);
 
@@ -38,6 +36,7 @@ class Application {
         Grid grid;
         LuaEngine luaengine;
         Console console;
+        Shaders shaders;
         GLFWwindow* window = nullptr;
 
         int fbWidth, fbHeight;
