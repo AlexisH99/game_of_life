@@ -10,11 +10,12 @@ LuaEngine::LuaEngine() {
 }
     
 LuaEngine::~LuaEngine() {
-    lua_close(L);
+    if (L) lua_close(L);
 }
 
 void LuaEngine::init() {
     std::cout << "Lua version: " << LUA_VERSION << std::endl;
+    if (L) lua_close(L);
     L = luaL_newstate();
     luaL_openlibs(L);
 }

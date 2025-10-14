@@ -25,7 +25,7 @@ class LuaEngine {
         lua_State* state();
 
     private:
-        lua_State* L;
+        lua_State* L = nullptr;
         std::function<void(const std::string&)> printCB;
 };
 
