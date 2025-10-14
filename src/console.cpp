@@ -150,3 +150,8 @@ void Console::appendText(std::vector<float>& pts, int x, int y, const std::strin
         }
     }
 }
+
+void Console::cleanup() {
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+}

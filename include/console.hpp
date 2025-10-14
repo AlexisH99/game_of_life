@@ -39,6 +39,7 @@ class Console {
         void log(const std::string& s);
         void handleInput(GLFWwindow* win, int key, int action);
         void handleChar(unsigned int codepoint);
+        void cleanup();
 
         bool visible = false;
         LuaEngine* lua = nullptr;
