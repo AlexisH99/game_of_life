@@ -18,8 +18,8 @@ void Application::run() {
     loadConfig();
     initGrid();
     initWindow();
-    shaders.init(window);
     initGlad();
+    shaders.init();
     initRender();
     initConsole();
     mainLoop();
@@ -168,7 +168,7 @@ int Application::initWindow() {
 }
 
 void Application::initConsole() {
-    console.init(window);
+    console.init();
     luaengine.init();
     console.lua = &luaengine;
     luaengine.registerPrintRedirect([&](const std::string& s){ console.log(s); });

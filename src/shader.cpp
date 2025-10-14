@@ -11,9 +11,7 @@ Shaders::~Shaders() {
 
 }
 
-void Shaders::init(GLFWwindow* window) {
-    glfwMakeContextCurrent(window);
-    gladLoadGL(glfwGetProcAddress);
+void Shaders::init() {
     mainVertShader = compileShader(GL_VERTEX_SHADER, mainVert);
     mainFragShader = compileShader(GL_FRAGMENT_SHADER, mainFrag);
     mainShader.program = linkProgram(mainVertShader, mainFragShader);

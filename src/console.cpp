@@ -60,9 +60,7 @@ Console::~Console() {
 
 }
 
-void Console::init(GLFWwindow* window) {
-    glfwMakeContextCurrent(window);
-    gladLoadGL(glfwGetProcAddress);
+void Console::init() {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 }

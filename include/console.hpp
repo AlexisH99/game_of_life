@@ -34,7 +34,7 @@ class Console {
         Console();
         ~Console();
 
-        void init(GLFWwindow* window);
+        void init();
         void draw(GLFWwindow* window);
         void log(const std::string& s);
         void handleInput(GLFWwindow* win, int key, int action);

@@ -7,7 +7,7 @@ class Shaders {
         Shaders();
         ~Shaders();
 
-        void init(GLFWwindow* window);
+        void init();
 
         unsigned int compileShader(GLenum type, const char* src);
         unsigned int linkProgram(unsigned int vert, unsigned int frag);
