@@ -19,7 +19,7 @@ void Application::run() {
     initGrid();
     initWindow();
     initGlad();
-    shaders.init();
+    initShaders();
     initRender();
     initConsole();
     mainLoop();
@@ -174,6 +174,10 @@ void Application::initConsole() {
     luaengine.registerPrintRedirect([&](const std::string& s){ console.log(s); });
 }
 
+void Application::initShaders() {
+    shaders.init();
+}
+
 int Application::initGlad() {
     if (!gladLoadGL(glfwGetProcAddress)) {
         std::cerr << "Error GLAD init" << std::endl;
@@ -194,8 +198,6 @@ int Application::initGlad() {
 
     return 0;
 }
-
-
 
 void Application::initRender() {
     float vertices[] = {

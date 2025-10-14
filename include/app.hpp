@@ -28,6 +28,7 @@ class Application {
         void initGrid();
         int initWindow();
         int initGlad();
+        void initShaders();
         void initRender();
         void initConsole();
         void mainLoop();
