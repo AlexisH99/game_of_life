@@ -112,15 +112,20 @@ cmake --build build
 
 ## Performance
 
-Performed on Ryzen 5 9600X + GTX 980 Ti
-| Grid Size   | v1.0.0 (FPS avg)                        | v1.1.0 (FPS avg)
-| ----------- | --------------------------------------- | --------------------------------------- |
-| 500 × 500   | ~1900 FPS                               | (Coming soon)                           |
-| 1000 × 1000 | ~500 FPS                                |                                         |
-| 2000 × 2000 | ~120 FPS                                |                                         |
+Performed on Ryzen 5 9600X + GTX 980 Ti in a 900x900 window.
+| Grid Size     | v1.0.0 (FPS avg)                        | v1.1.0 (FPS avg)
+| ------------- | --------------------------------------- | --------------------------------------- |
+| 500 × 500     | ~1500 FPS                               | ~11000 FPS                              |
+| 1000 × 1000   | ~380 FPS                                | ~10000 FPS                              |
+| 2000 × 2000   | ~80 FPS                                 | ~3300 FPS                               |
+| 5000 × 5000   | ~11 FPS                                 | ~580 FPS                                |
+| 10000 × 10000 |   too slow                              | ~150 FPS                                |
+| 20000 × 20000 |   too slow                              | ~40 FPS                                 |
+| 50000 × 50000 |   too slow                              | ~7 FPS                                  |
 
-Performance is now limited by rendering for small grids < 1000x1000. Then large grids > 5000x5000 are CPU limited.
-A i7-6700HQ GTX960M laptop runs a 2000x2000 grid at ~950 fps on this dev branch, to be tested and released on v1.1.0.
+Performance is now capped by rendering for small grids < 1000x1000. Then larger grids are CPU limited.
+The new 1.1 version can compute 100x larger grids than 1.0, and still monothread. It can be further improved by SIMD qnd multithreading.
+The simulation could be memory bound in the future since a 50000x50000 (2.5 billion cells) grid takes almost 1GB of RAM.
 
 ## Planned features
 
