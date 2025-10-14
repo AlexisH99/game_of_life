@@ -21,6 +21,7 @@ void Application::run() {
     shaders.init(window);
     initGlad();
     initRender();
+    initConsole();
     mainLoop();
 }
 
@@ -87,7 +88,7 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
     Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
     glfwMakeContextCurrent(window);
     if (app) {
-        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !app->console.visible) {
             app->pause = !app->pause;
             if (app->pause) {
                 glfwSwapInterval(1);
@@ -97,10 +98,22 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
                 }
             }
         }
-        if (app->pause && key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
+        if (app->pause && key == GLFW_KEY_RIGHT && action == GLFW_PRESS && !app->console.visible) {
             app->grid.step();
         }
+        if ((mods & GLFW_MOD_CONTROL) && key == GLFW_KEY_D && action == GLFW_PRESS) {
+            app->console.visible = !app->console.visible;
+        }
+
+        if (app->console.visible) {
+            app->console.handleInput(app->window, key, action);
+        }
     }
+}
+
+void Application::char_callback(GLFWwindow* window, unsigned int codepoint){
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    app->console.handleChar(codepoint);
 }
 
 void Application::loadConfig() {
@@ -143,6 +156,7 @@ int Application::initWindow() {
     set_window_icon_from_resource(window);
     glfwSetWindowUserPointer(window, this);
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCharCallback(window, char_callback);
     
     if (cfg.vsync || (pause & !cfg.vsync)) {
         glfwSwapInterval(1);
@@ -151,6 +165,13 @@ int Application::initWindow() {
     }
 
     return 0;
+}
+
+void Application::initConsole() {
+    console.init(window);
+    luaengine.init();
+    console.lua = &luaengine;
+    luaengine.registerPrintRedirect([&](const std::string& s){ console.log(s); });
 }
 
 int Application::initGlad() {
@@ -242,7 +263,8 @@ void Application::mainLoop() {
         glUniform2f(glGetUniformLocation(shaders.mainShader, "gridSize"), cfg.gridx, cfg.gridy);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
-
+        
+        console.draw(window);
         glfwSwapBuffers(window);
         glfwPollEvents();
         

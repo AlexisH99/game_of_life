@@ -3,6 +3,7 @@
 #include "grid.hpp"
 #include "shader.hpp"
 #include "config.hpp"
+#include "console.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
@@ -15,6 +16,7 @@ class Application {
 
         void run();
         static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+        static void char_callback(GLFWwindow* window, unsigned int codepoint);
         static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
         Shaders shaders;
@@ -27,11 +29,14 @@ class Application {
         int initWindow();
         int initGlad();
         void initRender();
+        void initConsole();
         void mainLoop();
         void cleanup();
 
         Config cfg;
         Grid grid;
+        LuaEngine luaengine;
+        Console console;
         GLFWwindow* window = nullptr;
 
         int fbWidth, fbHeight;
