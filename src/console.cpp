@@ -83,7 +83,7 @@ void Console::draw(GLFWwindow* window) {
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
 
     cWidth = (float)fbWidth;
-    cHeight = (float)fbHeight/2;
+    cHeight = (float)(0.3 * fbHeight);
 
     // === fond semi-transparent ===
     float bgVerts[12] = {
@@ -97,18 +97,21 @@ void Console::draw(GLFWwindow* window) {
     glEnableVertexAttribArray(0);
 
     glUniform2f(glGetUniformLocation(app->shaders.consoleShader, "uScreen"), (float)fbWidth, (float)fbHeight);
-    glUniform4f(glGetUniformLocation(app->shaders.consoleShader, "uColor"), 0.0f, 0.0f, 0.0f, 0.6f);
+    glUniform4f(glGetUniformLocation(app->shaders.consoleShader, "uColor"), 0.0f, 0.0f, 0.15f, 0.75f);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // === texte vert ===
     std::vector<float> pts;
     int lineHeight = 10;
-    int y = 20;
-    for (int i = std::max(0, (int)lines.size() - 25); i < (int)lines.size(); i++) {
+    int maxVisibleLines = (int)(cHeight / lineHeight) - 3;
+    if (maxVisibleLines < 1) maxVisibleLines = 1;
+
+    int y = 10;
+    for (int i = std::max(0, (int)lines.size() - maxVisibleLines); i < (int)lines.size(); i++) {
         appendText(pts, 10, y, lines[i]);
         y += lineHeight;
     }
-    appendText(pts, 10, y + lineHeight, "> " + input + "_");
+    appendText(pts, 10, cHeight - lineHeight, "> " + input + "_");
 
     glBufferData(GL_ARRAY_BUFFER, pts.size() * sizeof(float), pts.data(), GL_STREAM_DRAW);
     glUniform4f(glGetUniformLocation(app->shaders.consoleShader, "uColor"), 0.0f, 1.0f, 0.0f, 1.0f);
