@@ -98,7 +98,7 @@ void Console::draw(GLFWwindow* window) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // === texte vert ===
-    std::vector<float> pts;
+    pts.clear();
     int lineHeight = 10;
     int maxVisibleLines = (int)(cHeight / lineHeight) - 3;
     if (maxVisibleLines < 1) maxVisibleLines = 1;

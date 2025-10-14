@@ -50,6 +50,7 @@ class Console {
 
         std::vector<std::string> lines;
         std::string input;
+        std::vector<float> pts;
         unsigned int VAO = 0, VBO = 0;
         int fbWidth, fbHeight;
         float cWidth, cHeight;
