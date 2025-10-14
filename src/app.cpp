@@ -171,6 +171,7 @@ void Application::initConsole() {
     console.init();
     luaengine.init();
     console.lua = &luaengine;
+    console.shaders = &shaders;
     luaengine.registerPrintRedirect([&](const std::string& s){ console.log(s); });
 }
 

@@ -43,6 +43,7 @@ class Console {
 
         bool visible = false;
         LuaEngine* lua = nullptr;
+        Shaders* shaders =  nullptr;
 
     private:
         void appendText(std::vector<float>& pts, int x, int y, const std::string& text);
