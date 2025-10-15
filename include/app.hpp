@@ -1,9 +1,11 @@
 #pragma once
 
-#include "grid.hpp"
-#include "shader.hpp"
 #include "config.hpp"
+#include "grid.hpp"
+#include "window.hpp"
+#include "gl_wrappers.hpp"
 #include "console.hpp"
+#include "renderer.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
@@ -26,24 +28,34 @@ class Application {
         void initGrid();
         int initWindow();
         int initGlad();
-        void initShaders();
         void initRender();
         void initConsole();
         void mainLoop();
         void cleanup();
 
-        Config cfg;
-        Grid grid;
-        LuaEngine luaengine;
-        Console console;
-        Shaders shaders;
-        GLFWwindow* window = nullptr;
+        // Config cfg;
+        // Grid grid;
+        // Shaders shaders;
+        // LuaEngine luaengine;
+        // Console console;
+        // GLFWwindow* window = nullptr;
+
+        std::unique_ptr<Config> cfg;
+        std::unique_ptr<Window> window;
+        std::unique_ptr<Grid> grid;
+        std::unique_ptr<LuaEngine> luaengine;
+        std::unique_ptr<Console> console;
 
         int fbWidth, fbHeight;
 
-        unsigned int VBO = 0, VAO = 0;
+        std::unique_ptr<GLVertexBuffer> vao;
+        std::unique_ptr<GLBuffer> vbo;
+        std::unique_ptr<GLTexture> texture;
+        std::unique_ptr<GLProgram> shaders;
 
-        unsigned int textureID = 0;
+        // GLVertexBuffer vao;
+        // GLBuffer vbo{GL_ARRAY_BUFFER};
+        // GLTexture texture{GL_TEXTURE};
 
         std::string title = "GOL";
 

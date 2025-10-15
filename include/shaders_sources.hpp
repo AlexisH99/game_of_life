@@ -1,73 +1,72 @@
 # pragma once
 
-struct Shaders {
-    static constexpr const char* mainVert = R"(
-        #version 330 core
 
-        layout (location = 0) in vec2 aPos;
-        layout (location = 1) in vec2 aTexCoord;
+static constexpr const char* mainVert = R"(
+    #version 330 core
 
-        out vec2 TexCoord;
+    layout (location = 0) in vec2 aPos;
+    layout (location = 1) in vec2 aTexCoord;
 
-        void main() {
-            gl_Position = vec4(aPos, 0.0, 1.0);
-            TexCoord = aTexCoord;
-        }
-    )";
-    static constexpr const char* mainFrag = R"(
-        #version 330 core
+    out vec2 TexCoord;
 
-        uniform usampler2D packedGrid;  // plus de layout(binding)
-        uniform int leftpad;
-        uniform vec2 windowSize;
-        uniform vec2 gridSize;
+    void main() {
+        gl_Position = vec4(aPos, 0.0, 1.0);
+        TexCoord = aTexCoord;
+    }
+)";
+static constexpr const char* mainFrag = R"(
+    #version 330 core
 
-        out vec4 FragColor;
+    uniform usampler2D packedGrid;  // plus de layout(binding)
+    uniform int leftpad;
+    uniform vec2 windowSize;
+    uniform vec2 gridSize;
 
-        void main() {
-            vec2 frag = gl_FragCoord.xy - vec2(0.5);
+    out vec4 FragColor;
 
-            int gx = int(frag.x * (gridSize.x / windowSize.x));
-            int gy = int(frag.y * (gridSize.y / windowSize.y));
+    void main() {
+        vec2 frag = gl_FragCoord.xy - vec2(0.5);
 
-            if (gx < 0 || gx >= int(gridSize.x) || gy < 0 || gy >= int(gridSize.y))
-                discard;
+        int gx = int(frag.x * (gridSize.x / windowSize.x));
+        int gy = int(frag.y * (gridSize.y / windowSize.y));
 
-            int y = gy + 1;
-            int x = gx + leftpad;
+        if (gx < 0 || gx >= int(gridSize.x) || gy < 0 || gy >= int(gridSize.y))
+            discard;
 
-            int word_index = x / 64;
-            int bit_index  = x % 64;
+        int y = gy + 1;
+        int x = gx + leftpad;
 
-            uvec4 texel = texelFetch(packedGrid, ivec2(word_index, y), 0);
-            uint low  = texel.r;
-            uint high = texel.g;
+        int word_index = x / 64;
+        int bit_index  = x % 64;
 
-            uint alive = (bit_index < 32)
-                ? ((low >> bit_index) & 1u)
-                : ((high >> (bit_index - 32)) & 1u);
+        uvec4 texel = texelFetch(packedGrid, ivec2(word_index, y), 0);
+        uint low  = texel.r;
+        uint high = texel.g;
 
-            float val = float(alive);
-            FragColor = vec4(val, val, val, 1.0);
-        }
-    )";
-    static constexpr const char* consoleVert = R"(
-        #version 330 core
-        layout(location = 0) in vec2 aPos;
-        uniform vec2 uScreen;
-        void main() {
-            vec2 ndc = (aPos / uScreen) * 2.0 - 1.0;
-            ndc.y = -ndc.y; // Origine en haut
-            gl_Position = vec4(ndc, 0.0, 1.0);
-            gl_PointSize = 1.0;
-        }
-    )";
-    static constexpr const char* consoleFrag = R"(
-        #version 330 core
-        out vec4 FragColor;
-        uniform vec4 uColor;
-        void main() {
-            FragColor = uColor;
-        }
-    )";
-};
+        uint alive = (bit_index < 32)
+            ? ((low >> bit_index) & 1u)
+            : ((high >> (bit_index - 32)) & 1u);
+
+        float val = float(alive);
+        FragColor = vec4(val, val, val, 1.0);
+    }
+)";
+static constexpr const char* consoleVert = R"(
+    #version 330 core
+    layout(location = 0) in vec2 aPos;
+    uniform vec2 uScreen;
+    void main() {
+        vec2 ndc = (aPos / uScreen) * 2.0 - 1.0;
+        ndc.y = -ndc.y; // Origine en haut
+        gl_Position = vec4(ndc, 0.0, 1.0);
+        gl_PointSize = 1.0;
+    }
+)";
+static constexpr const char* consoleFrag = R"(
+    #version 330 core
+    out vec4 FragColor;
+    uniform vec4 uColor;
+    void main() {
+        FragColor = uColor;
+    }
+)";

@@ -1,5 +1,5 @@
 #pragma once
-#include "shader.hpp"
+#include "gl_wrappers.hpp"
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -13,6 +13,7 @@ extern "C" {
 #include <sstream>
 #include <unordered_map>
 #include <functional>
+#include <memory>
 
 class LuaEngine {
     public:
@@ -43,7 +44,6 @@ class Console {
 
         bool visible = false;
         LuaEngine* lua = nullptr;
-        Shaders* shaders =  nullptr;
 
     private:
         void appendText(std::vector<float>& pts, int x, int y, const std::string& text);
@@ -52,6 +52,9 @@ class Console {
         std::string input;
         std::vector<float> pts;
         unsigned int VAO = 0, VBO = 0;
+        std::unique_ptr<GLVertexBuffer> vao;
+        std::unique_ptr<GLBuffer> vbo;
+        std::unique_ptr<GLProgram> shaders;
         int fbWidth, fbHeight;
         float cWidth, cHeight;
 };

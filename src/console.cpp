@@ -1,4 +1,5 @@
 #include "console.hpp"
+#include "shaders_sources.hpp"
 #include "font8x8_basic.hpp"
 
 #include <glad/gl.h>
@@ -61,8 +62,9 @@ Console::~Console() {
 }
 
 void Console::init() {
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    vao = std::make_unique<GLVertexBuffer>();
+    vbo = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);
+    shaders = std::make_unique<GLProgram>(consoleVert, consoleFrag);
 }
 
 void Console::log(const std::string& s) {
@@ -72,7 +74,7 @@ void Console::log(const std::string& s) {
 
 void Console::draw(GLFWwindow* window) {
     if (!visible) return;
-    glUseProgram(shaders->consoleShader.program);
+    shaders->use();
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -87,14 +89,15 @@ void Console::draw(GLFWwindow* window) {
         0, 0,  cWidth, 0,  cWidth, cHeight,
         0, 0,  cWidth, cHeight, 0, cHeight
     };
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(bgVerts), bgVerts, GL_STREAM_DRAW);
+    vao->bind();
+    vbo->bind();
+    vbo->set_data(sizeof(bgVerts), bgVerts, GL_STREAM_DRAW);
+
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
 
-    glUniform2f(glGetUniformLocation(shaders->consoleShader.program, "uScreen"), (float)fbWidth, (float)fbHeight);
-    glUniform4f(glGetUniformLocation(shaders->consoleShader.program, "uColor"), 0.0f, 0.0f, 0.15f, 0.75f);
+    glUniform2f(glGetUniformLocation(shaders->get(), "uScreen"), (float)fbWidth, (float)fbHeight);
+    glUniform4f(glGetUniformLocation(shaders->get(), "uColor"), 0.0f, 0.0f, 0.15f, 0.75f);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // === texte vert ===
@@ -110,8 +113,8 @@ void Console::draw(GLFWwindow* window) {
     }
     appendText(pts, 10, cHeight - lineHeight, "> " + input + "_");
 
-    glBufferData(GL_ARRAY_BUFFER, pts.size() * sizeof(float), pts.data(), GL_STREAM_DRAW);
-    glUniform4f(glGetUniformLocation(shaders->consoleShader.program, "uColor"), 0.0f, 1.0f, 0.0f, 1.0f);
+    vbo->set_data(pts.size() * sizeof(float), pts.data(), GL_STREAM_DRAW);
+    glUniform4f(glGetUniformLocation(shaders->get(), "uColor"), 0.0f, 1.0f, 0.0f, 1.0f);
     glDrawArrays(GL_POINTS, 0, pts.size()/2);
 
     glDisable(GL_BLEND);
@@ -150,6 +153,5 @@ void Console::appendText(std::vector<float>& pts, int x, int y, const std::strin
 }
 
 void Console::cleanup() {
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
+
 }

@@ -68,11 +68,13 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 add_executable(game_of_life 
     src/main.cpp
     src/app.cpp
-    src/gl_wrappers.cpp
-    src/grid.cpp
-    src/console.cpp
-    src/shader.cpp
     src/config.cpp
+    src/grid.cpp
+    src/window.cpp
+    src/gl_wrappers.cpp
+    src/shader.cpp
+    src/renderer.cpp
+    src/console.cpp
     ${APP_RES}
 )
 

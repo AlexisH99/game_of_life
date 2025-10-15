@@ -50,6 +50,8 @@ class GLTexture {
         void set_parameters() const;
         void allocate(GLint internalFormat, GLsizei width, GLsizei height,
             GLenum format, GLenum type, const void* data) const;
+        void set_data(GLsizei width, GLsizei height,
+            GLenum format, GLenum type, const void* data);
 
         GLTexture(const GLTexture&) = delete;
         GLTexture& operator=(const GLTexture&) = delete;
@@ -70,6 +72,7 @@ class GLProgram {
 
         void loadFromSource(const char* vertSrc, const char* fragSrc);
         void use() const;
+        GLuint get() const;
 
         GLProgram(const GLProgram&) = delete;
         GLProgram& operator=(const GLProgram&) = delete;

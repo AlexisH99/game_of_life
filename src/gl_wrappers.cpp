@@ -92,6 +92,10 @@ void GLTexture::allocate(GLint internalFormat, GLsizei width, GLsizei height,
     glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 }
 
+void GLTexture::set_data(GLsizei width, GLsizei height, GLenum format, GLenum type, const void* data = nullptr) {
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, data);
+}
+
 GLTexture::GLTexture(GLTexture&& other) noexcept
     : id(other.id), target(other.target)
 {
@@ -135,6 +139,10 @@ void GLProgram::loadFromSource(const char* vertSrc, const char* fragSrc) {
 
 void GLProgram::use() const {
     glUseProgram(id);
+}
+
+GLuint GLProgram::get() const {
+    return id;
 }
 
 GLuint GLProgram::compile(GLenum type, const char* src) {
