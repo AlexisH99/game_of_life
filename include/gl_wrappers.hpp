@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glad/gl.h>
+#include <GLFW/glfw3.h>
 
 class GLVertexBuffer {
     public:
@@ -22,7 +23,7 @@ class GLVertexBuffer {
 
 class GLBuffer {
     public:
-        GLBuffer(GLenum target);
+        GLBuffer(GLenum tgt);
         ~GLBuffer();
 
         void bind() const;
@@ -37,7 +38,7 @@ class GLBuffer {
 
     private:
         GLuint id = 0;
-        GLenum target;
+        GLenum target = 0;
 };
 
 class GLTexture {
@@ -58,7 +59,7 @@ class GLTexture {
     
     private:
         GLuint id = 0;
-        GLenum target;
+        GLenum target = 0;
 };
 
 class GLProgram {

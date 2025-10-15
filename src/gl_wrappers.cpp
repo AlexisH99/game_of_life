@@ -30,7 +30,9 @@ GLVertexBuffer& GLVertexBuffer::operator=(GLVertexBuffer&& other) noexcept {
     return *this;
 }
 
-GLBuffer::GLBuffer([[maybe_unused]]GLenum target = GL_ARRAY_BUFFER) {
+GLBuffer::GLBuffer([[maybe_unused]]GLenum tgt = GL_ARRAY_BUFFER)
+    : target(tgt)
+{
     glGenBuffers(1, &id);
 }
 
@@ -39,11 +41,11 @@ GLBuffer::~GLBuffer() {
 }
 
 void GLBuffer::bind() const {
-    glBindBuffer(id, target);
+    glBindBuffer(target, id);
 }
 
 void GLBuffer::unbind() const {
-    glBindBuffer(0, target);
+    glBindBuffer(target, 0);
 }
 
 void GLBuffer::set_data(GLsizeiptr size, const void* data, GLenum usage = GL_STATIC_DRAW) {
@@ -63,7 +65,9 @@ GLBuffer& GLBuffer::operator=(GLBuffer&& other) noexcept {
     return *this;
 }
 
-GLTexture::GLTexture([[maybe_unused]]GLenum target = GL_TEXTURE_2D) {
+GLTexture::GLTexture([[maybe_unused]]GLenum tgt = GL_TEXTURE_2D) 
+    : target(tgt)
+{
     glGenTextures(1, &id);
 }
 
