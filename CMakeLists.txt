@@ -68,6 +68,7 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 add_executable(game_of_life 
     src/main.cpp
     src/app.cpp
+    src/gl_wrappers.cpp
     src/grid.cpp
     src/console.cpp
     src/shader.cpp
