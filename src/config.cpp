@@ -155,6 +155,13 @@ void Config::printAllParams() const {
     std::cout << "Pause/unpause simulation  : Space\n";
     std::cout << "One time step             : Right arrow\n";
     std::cout << "Open/Close console        : F1\n";
+    std::cout << "=========== COMMANDS ===========\n";
+    std::cout << "stop/start                : pause/unpause simulation\n";
+    std::cout << "step                      : do one simulation step\n";
+    std::cout << "step <n_steps>            : do n_steps simulation steps\n";
+    std::cout << "reset                     : regenerate random grid\n";
+    std::cout << "get cfg width/height      : print current window width/height\n";
+    std::cout << "set cfg width/height      : set window width/height\n";
     std::cout << "================================\n";
 }
 
