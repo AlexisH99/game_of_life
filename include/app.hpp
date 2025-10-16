@@ -3,7 +3,6 @@
 #include "config.hpp"
 #include "grid.hpp"
 #include "window.hpp"
-#include "gl_wrappers.hpp"
 #include "console.hpp"
 #include "renderer.hpp"
 #include <glad/gl.h>

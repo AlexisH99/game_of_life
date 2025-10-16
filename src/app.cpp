@@ -1,5 +1,4 @@
 #include "app.hpp"
-#include "shaders_sources.hpp"
 
 #include <windows.h>
 #include <iostream>

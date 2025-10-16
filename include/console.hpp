@@ -11,9 +11,6 @@ extern "C" {
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <string>
-#include <iostream>
-#include <sstream>
-#include <unordered_map>
 #include <functional>
 #include <memory>
 
