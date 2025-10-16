@@ -1,5 +1,7 @@
 #pragma once
 #include "gl_wrappers.hpp"
+#include "config.hpp"
+#include "grid.hpp"
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -22,7 +24,12 @@ class LuaEngine {
         
         void init();
         void registerPrintRedirect(std::function<void(const std::string&)> cb);
-        void execute(const std::string& code);
+        void execute(const std::string& rawInput);
+        void bindConfig(Config* cfg);
+        void bindGrid(Grid* grid);
+        template<typename T>
+        void registerObject(const std::string& name, T* object,
+            const luaL_Reg* methods);
         lua_State* state();
 
     private:

@@ -2,6 +2,8 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <glad/gl.h>
+#include <GLFW/glfw3.h>
 
 Config::Config() {
     
@@ -153,4 +155,26 @@ void Config::printAllParams() const {
     std::cout << "Pause/unpause simulation  : Space\n";
     std::cout << "One time step             : Right arrow\n";
     std::cout << "================================\n";
+}
+
+int Config::lua_setWidth(lua_State* L) {
+    auto cfg = static_cast<Config*>(lua_touserdata(L, lua_upvalueindex(1)));
+    cfg->width = (int)luaL_checkinteger(L, 3);
+    if (cfg->window) {
+        int currentHeight;
+        glfwGetWindowSize(cfg->window, nullptr, &currentHeight);
+        glfwSetWindowSize(cfg->window, cfg->width, currentHeight);
+    }
+    return 0;
+}
+
+int Config::lua_setHeight(lua_State* L) {
+    auto cfg = static_cast<Config*>(lua_touserdata(L, lua_upvalueindex(1)));
+    cfg->height = (int)luaL_checkinteger(L, 3);
+    if (cfg->window) {
+        int currentWidth;
+        glfwGetWindowSize(cfg->window, &currentWidth, nullptr);
+        glfwSetWindowSize(cfg->window, currentWidth, cfg->height);
+    }
+    return 0;
 }

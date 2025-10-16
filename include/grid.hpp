@@ -19,7 +19,10 @@ class Grid {
         void initMask();
         void initCheckerGrid();
         void initRandomGrid();
+        void reset();
         void step();
+        void start();
+        void stop();
         void printMask();
         void printCurrent();
         std::vector<uint64_t> getGrid();

@@ -89,8 +89,8 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
     glfwMakeContextCurrent(window);
     if (app) {
         if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !app->console->visible) {
-            app->pause = !app->pause;
-            if (app->pause) {
+            app->grid->pause = !app->grid->pause;
+            if (app->grid->pause) {
                 glfwSwapInterval(1);
             } else {
                 if (!(app->cfg->vsync)) {
@@ -98,7 +98,7 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
                 }
             }
         }
-        if (app->pause && key == GLFW_KEY_RIGHT && action == GLFW_PRESS && !app->console->visible) {
+        if (app->grid->pause && key == GLFW_KEY_RIGHT && action == GLFW_PRESS && !app->console->visible) {
             app->grid->step();
         }
         if ((mods & GLFW_MOD_CONTROL) && key == GLFW_KEY_D && action == GLFW_PRESS) {
@@ -120,7 +120,6 @@ void Application::loadConfig() {
     cfg = std::make_unique<Config>();
     cfg->initConfig("config.jsonc");
     cfg->printAllParams();
-    pause = cfg->freeze_at_start;
     if (cfg->width < 120) {
         std::cout << "Warning : minimum allowed width is 120. Moved back to this value.\n";
         cfg->width = 120;
@@ -142,6 +141,7 @@ void Application::initGrid() {
 
 int Application::initWindow() {
     window = std::make_unique<Window>(cfg->width, cfg->height, title);
+    cfg->window = window->get();
     window->makeContextCurrent();
     window->setUserPointer(this);
     set_window_icon_from_resource(window->get());
@@ -149,7 +149,7 @@ int Application::initWindow() {
     glfwSetKeyCallback(window->get(), key_callback);
     glfwSetCharCallback(window->get(), char_callback);
     
-    if (cfg->vsync || (pause & !cfg->vsync)) {
+    if (cfg->vsync || (cfg->freeze_at_start && !cfg->vsync)) {
         glfwSwapInterval(1);
     } else { 
         glfwSwapInterval(0);
@@ -163,6 +163,8 @@ void Application::initConsole() {
     luaengine = std::make_unique<LuaEngine>();
     console->init();
     luaengine->init();
+    luaengine->bindConfig(cfg.get());
+    luaengine->bindGrid(grid.get());
     console->lua = luaengine.get();
     luaengine->registerPrintRedirect([&](const std::string& s){ console->log(s); });
 }
@@ -208,7 +210,7 @@ void Application::mainLoop() {
         
         glfwPollEvents();
         
-        if (!pause) {
+        if (!grid->pause) {
             grid->step();
         }
 

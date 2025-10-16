@@ -55,5 +55,4 @@ class Application {
 
         std::string title = "GOL";
 
-        bool pause = true;
 };
