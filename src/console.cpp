@@ -74,10 +74,23 @@ void LuaEngine::execute(const std::string& rawInput) {
     else if (tokens[0] == "step" && tokens.size() >= 2) {
         code = "for i=1," + tokens[1] + " do grid.step() end";
     }
+    
+    else if (tokens[0] == "resize" && tokens.size() >= 3) {
+        if (tokens[1] == "." && tokens[2] == ".") {
+            code = "";
+        } else if (tokens[1] == ".") {
+            code = "cfg.resize(cfg.width," + tokens[2] + ")";
+        } else if (tokens[2] == ".") {
+            code = "cfg.resize(" + tokens[1] + ",cfg.height)";
+        } else {
+            code = "cfg.resize(" + tokens[1] + "," + tokens[2] + ")";
+        }
+        code += ";print('window resized to ' .. cfg.width .. 'x' .. cfg.height)";
+    }
 
     // === 3. get <object> <property> ===
     else if (tokens[0] == "get" && tokens.size() >= 3) {
-        code = "print(" + tokens[1] + "." + tokens[2] + ")";
+        code = "print('" + tokens[2] + ":' .. " + tokens[1] + "." + tokens[2] + ")";
     }
 
     // === 4. set <object> <property> <value> ===
@@ -128,6 +141,19 @@ lua_State* LuaEngine::state() {
 
 void LuaEngine::bindConfig(Config* cfg) {
     lua_newtable(L);                  // config
+
+    lua_pushlightuserdata(L, cfg);
+    lua_pushcclosure(L, [](lua_State* L)->int {
+        auto* cfg = static_cast<Config*>(lua_touserdata(L, lua_upvalueindex(1)));
+        int w = (int)luaL_checkinteger(L, 1);
+        int h = (int)luaL_checkinteger(L, 2);
+        cfg->width = w;
+        cfg->height = h;
+        if (cfg->window) glfwSetWindowSize(cfg->window, w, h);
+        return 0;
+    }, 1);
+    lua_setfield(L, -2, "resize");
+
     lua_newtable(L);                  // metatable
 
     // __index getter
@@ -143,18 +169,16 @@ void LuaEngine::bindConfig(Config* cfg) {
     lua_setfield(L, -2, "__index");
 
     // __newindex setter
-    lua_pushlightuserdata(L, cfg);
-    lua_pushcclosure(L, [](lua_State* L)->int {
-        Config* cfg = (Config*)lua_touserdata(L, lua_upvalueindex(1));
-        std::string key = luaL_checkstring(L, 2);
-        if (key == "width") {
-            cfg->lua_setWidth(L);
-        } else if (key == "height") {
-            cfg->lua_setHeight(L);
-        }
-        return 0;
-    }, 1);
-    lua_setfield(L, -2, "__newindex");
+    // lua_pushlightuserdata(L, cfg);
+    // lua_pushcclosure(L, [](lua_State* L)->int {
+    //     Config* cfg = (Config*)lua_touserdata(L, lua_upvalueindex(1));
+    //     std::string key = luaL_checkstring(L, 2);
+    //     int value = (int)luaL_checkinteger(L, 3);
+    //     if (key == "width") cfg->width = value;
+    //     else if (key == "height") cfg->height = value;
+    //     return 0;
+    // }, 1);
+    // lua_setfield(L, -2, "__newindex");
 
     lua_setmetatable(L, -2);  // setmetatable(config, mt)
     lua_setglobal(L, "cfg");

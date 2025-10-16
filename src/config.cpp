@@ -160,29 +160,7 @@ void Config::printAllParams() const {
     std::cout << "step                      : do one simulation step\n";
     std::cout << "step <n_steps>            : do n_steps simulation steps\n";
     std::cout << "reset                     : regenerate random grid\n";
+    std::cout << "resize <width> <height>   : resize window to width and height values (. to keep current)\n";
     std::cout << "get cfg width/height      : print current window width/height\n";
-    std::cout << "set cfg width/height      : set window width/height\n";
     std::cout << "================================\n";
-}
-
-int Config::lua_setWidth(lua_State* L) {
-    auto cfg = static_cast<Config*>(lua_touserdata(L, lua_upvalueindex(1)));
-    cfg->width = (int)luaL_checkinteger(L, 3);
-    if (cfg->window) {
-        int currentHeight;
-        glfwGetWindowSize(cfg->window, nullptr, &currentHeight);
-        glfwSetWindowSize(cfg->window, cfg->width, currentHeight);
-    }
-    return 0;
-}
-
-int Config::lua_setHeight(lua_State* L) {
-    auto cfg = static_cast<Config*>(lua_touserdata(L, lua_upvalueindex(1)));
-    cfg->height = (int)luaL_checkinteger(L, 3);
-    if (cfg->window) {
-        int currentWidth;
-        glfwGetWindowSize(cfg->window, &currentWidth, nullptr);
-        glfwSetWindowSize(cfg->window, currentWidth, cfg->height);
-    }
-    return 0;
 }

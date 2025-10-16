@@ -30,8 +30,6 @@ class Config {
 
         static int lua_getWidth(lua_State* L);
         static int lua_getHeight(lua_State* L);
-        static int lua_setWidth(lua_State* L);
-        static int lua_setHeight(lua_State* L);
 
         GLFWwindow* window = nullptr;
 
