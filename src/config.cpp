@@ -154,6 +154,7 @@ void Config::printAllParams() const {
     std::cout << "========= KEY BINDINGS =========\n";
     std::cout << "Pause/unpause simulation  : Space\n";
     std::cout << "One time step             : Right arrow\n";
+    std::cout << "Open/Close console        : F1\n";
     std::cout << "================================\n";
 }
 
