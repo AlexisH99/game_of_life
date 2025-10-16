@@ -10,12 +10,12 @@ Grid::~Grid() {
 
 }
 
-void Grid::initSize(int gridx, int gridy, int bs) {
-    gridX = gridx;
-    gridY = gridy;
-    rows = gridy + 2;
-    words_per_row = w_for_w(gridx);
-    blocksize = bs;
+void Grid::initSize() {
+    gridX = cfg->gridx;
+    gridY = cfg->gridy;
+    rows = cfg->gridy + 2;
+    words_per_row = w_for_w(cfg->gridx);
+    blocksize = 1;
     mask.resize(rows * words_per_row);
     current.resize(rows * words_per_row);
     next.resize(rows * words_per_row);
@@ -109,6 +109,24 @@ void Grid::step() {
         }
     }
     std::swap(current, next);
+}
+
+void Grid::reset() {
+    initRandomGrid();
+}
+
+void Grid::start() {
+    pause = false;
+    if (cfg->vsync) {
+        glfwSwapInterval(1);
+    } else {
+        glfwSwapInterval(0);
+    }
+}
+
+void Grid::stop() {
+    pause = true;
+    glfwSwapInterval(1);
 }
 
 std::vector<uint64_t> Grid::getGrid() {

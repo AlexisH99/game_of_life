@@ -1,5 +1,6 @@
 #pragma once
 
+#include "config.hpp"
 #include <vector>
 #include <random>
 
@@ -14,7 +15,7 @@ class Grid {
         Grid();
         ~Grid();
 
-        void initSize(int gridx, int gridy, int bs);
+        void initSize();
         void initMask();
         void initCheckerGrid();
         void initRandomGrid();
@@ -30,6 +31,9 @@ class Grid {
         int rows;
         int words_per_row;
         int blocksize;
+        bool pause = true;
+
+        Config* cfg = nullptr;
     private:
         std::mt19937 rng;
         std::uniform_int_distribution<uint64_t> dist;

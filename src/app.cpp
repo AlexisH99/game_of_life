@@ -17,9 +17,9 @@ Application::~Application() {
 
 void Application::run() {
     loadConfig();
-    initGrid();
     initWindow();
     initGlad();
+    initGrid();
     initRender();
     initConsole();
     mainLoop();
@@ -129,7 +129,9 @@ void Application::loadConfig() {
 
 void Application::initGrid() {
     grid = std::make_unique<Grid>();
-    grid->initSize(cfg->gridx, cfg->gridy, 1);
+    grid->cfg = cfg.get();
+    grid->pause = cfg->freeze_at_start;
+    grid->initSize();
     grid->initMask();
     if (cfg->checker == true) {
         grid->initCheckerGrid();
