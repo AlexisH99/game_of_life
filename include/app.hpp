@@ -45,13 +45,9 @@ class Application {
         std::unique_ptr<Grid> grid;
         std::unique_ptr<LuaEngine> luaengine;
         std::unique_ptr<Console> console;
+        std::unique_ptr<Renderer> renderer;
 
         int fbWidth, fbHeight;
-
-        std::unique_ptr<GLVertexBuffer> vao;
-        std::unique_ptr<GLBuffer> vbo;
-        std::unique_ptr<GLTexture> texture;
-        std::unique_ptr<GLProgram> shaders;
 
         // GLVertexBuffer vao;
         // GLBuffer vbo{GL_ARRAY_BUFFER};
