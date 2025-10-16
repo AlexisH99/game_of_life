@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "GLFW/glfw3.h"
 
 #include <windows.h>
 #include <iostream>
@@ -100,7 +101,7 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
         if (app->grid->pause && key == GLFW_KEY_RIGHT && action == GLFW_PRESS && !app->console->visible) {
             app->grid->step();
         }
-        if ((mods & GLFW_MOD_CONTROL) && key == GLFW_KEY_D && action == GLFW_PRESS) {
+        if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
             app->console->visible = !app->console->visible;
         }
 
