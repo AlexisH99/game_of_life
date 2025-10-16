@@ -109,7 +109,6 @@ void Grid::step() {
         }
     }
     std::swap(current, next);
-    //unpackGrid();
 }
 
 std::vector<uint64_t> Grid::getGrid() {
