@@ -74,6 +74,7 @@ add_executable(game_of_life
     src/gl_wrappers.cpp
     src/shader.cpp
     src/renderer.cpp
+    src/luaengine.cpp
     src/console.cpp
     ${APP_RES}
 )
