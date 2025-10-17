@@ -39,9 +39,14 @@ Global properties: `windowSize`, `gridSize`
 Next things to implement : 
 
 - More global properties
-- Command to resize grid : reinitGrid and reinitRenderer
+- Command to resize grid : reinitGrid and reinitRenderer to be done
 - `step n_step` command in C++ side to get rendering between each step.
 - `step n_step` command variant to get slowed loop (time per step as second argument)
+- `help` command
+- `set` or `toogle` commands for specific parameters
+- Scrollable console (up to 1000 lines)
+- Command history (up to 100 commands)
+- Tab and autocompletion like in bash terminal
 
 ## Rules
 
