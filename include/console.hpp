@@ -24,12 +24,12 @@ class LuaEngine {
         void execute(const std::string& rawInput);
         void bindConfig(Config* cfg);
         void bindGrid(Grid* grid);
-        template<typename T>
-        void registerObject(const std::string& name, T* object,
-            const luaL_Reg* methods);
         lua_State* state();
 
     private:
+        template<typename T>
+        void addMethod(lua_State* L, const char* name, T* obj, lua_CFunction fn);
+
         lua_State* L = nullptr;
         std::function<void(const std::string&)> printCB;
 };

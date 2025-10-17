@@ -43,13 +43,12 @@ void LuaEngine::registerPrintRedirect(std::function<void(const std::string&)> cb
     lua_setglobal(L, "print");
 }
 
+lua_State* LuaEngine::state() {
+    return L;
+}
+
 void LuaEngine::execute(const std::string& rawInput) {
-    // if (luaL_dostring(L, code.c_str()) != LUA_OK) {
-    //     const char* err = lua_tostring(L, -1);
-    //     if (printCB) printCB(std::string("[Lua Error] ")+err);
-    //     lua_pop(L,1);
-    // }
-    std::string code;
+    std::string code = "print('> "+ rawInput + "');";
 
     // === 1. Tokenize ===
     std::istringstream iss(rawInput);
@@ -61,62 +60,41 @@ void LuaEngine::execute(const std::string& rawInput) {
     if (tokens.empty())
         return;
 
-    // === 2. Commandes spéciales (macros directes) ===
     if (tokens.size() == 1) {
-        if (tokens[0] == "stop")  code = "grid.stop()";
-        else if (tokens[0] == "start") code = "grid.start()";
-        else if (tokens[0] == "reset") code = "grid.reset()";
-        else if (tokens[0] == "step") code = "grid.step()";
+        if (tokens[0] == "stop")  code += "grid.stop()";
+        else if (tokens[0] == "start") code += "grid.start()";
+        else if (tokens[0] == "reset") code += "grid.reset()";
+        else if (tokens[0] == "step") code += "grid.step()";
         // else if (tokens[0] == "save")  code = "grid.save()";
         // else if (tokens[0] == "load")  code = "grid.load()";
     }
 
     else if (tokens[0] == "step" && tokens.size() >= 2) {
-        code = "for i=1," + tokens[1] + " do grid.step() end";
+        code += "for i=1," + tokens[1] + " do grid:step() end";
     }
     
-    else if (tokens[0] == "resize" && tokens.size() >= 3) {
+    else if (tokens[0] == "resize" && tokens.size() == 3) {
         if (tokens[1] == "." && tokens[2] == ".") {
-            code = "";
+            code += "";
         } else if (tokens[1] == ".") {
-            code = "cfg.resize(cfg.width," + tokens[2] + ")";
+            code += "cfg.resize(cfg.width," + tokens[2] + ");";
         } else if (tokens[2] == ".") {
-            code = "cfg.resize(" + tokens[1] + ",cfg.height)";
+            code += "cfg.resize(" + tokens[1] + ",cfg.height);";
         } else {
-            code = "cfg.resize(" + tokens[1] + "," + tokens[2] + ")";
+            code += "cfg.resize(" + tokens[1] + "," + tokens[2] + ");";
         }
-        code += ";print('window resized to ' .. cfg.width .. 'x' .. cfg.height)";
+        code += "print('window resized to ' .. cfg.width .. 'x' .. cfg.height)";
     }
 
-    // === 3. get <object> <property> ===
-    else if (tokens[0] == "get" && tokens.size() >= 3) {
-        code = "print('" + tokens[2] + ":' .. " + tokens[1] + "." + tokens[2] + ")";
+    else if (tokens[0] == "get" && tokens.size() == 2) {
+        if (tokens[1] == "windowSize") code += "local w, h = cfg.windowSize(); print('" + tokens[1] + ": ' .. w .. 'x' .. h)";
+        if (tokens[1] == "gridSize") code += "local w, h = cfg.gridSize(); print('" + tokens[1] + ": ' .. w .. 'x' .. h)";
     }
 
-    // === 4. set <object> <property> <value> ===
-    else if (tokens[0] == "set" && tokens.size() >= 4) {
-        code = tokens[1] + "." + tokens[2] + " = " + tokens[3];
-    }
-
-    // === 5. exec <object> <method> [(args)] ===
-    else if (tokens[0] == "exec" && tokens.size() >= 3) {
-        // Cas avec arguments entre parenthèses
-        std::string args;
-        size_t parenPos = rawInput.find('(');
-        if (parenPos != std::string::npos) {
-            args = rawInput.substr(parenPos); // "(5,10)"
-            code = tokens[1] + "." + tokens[2] + args;
-        } else {
-            code = tokens[1] + "." + tokens[2] + "()";
-        }
-    }
-
-    // === 6. Sinon, exécute directement du Lua brut ===
     else {
-        code = rawInput;
+        code += rawInput;
     }
 
-    // === 7. Exécution Lua ===
     if (luaL_dostring(L, code.c_str()) != LUA_OK) {
         const char* err = lua_tostring(L, -1);
         if (printCB)
@@ -126,111 +104,90 @@ void LuaEngine::execute(const std::string& rawInput) {
 }
 
 template<typename T>
-void LuaEngine::registerObject(const std::string& name, T* object,
-                               const luaL_Reg* methods) {
-    lua_pushlightuserdata(L, object);
-    luaL_newmetatable(L, name.c_str());
-    luaL_setfuncs(L, methods, 0);
-    lua_setmetatable(L, -2);
-    lua_setglobal(L, name.c_str());
-}
-
-lua_State* LuaEngine::state() {
-    return L;
+void LuaEngine::addMethod(lua_State* L, const char* name, T* obj, lua_CFunction fn) {
+    lua_pushlightuserdata(L, obj);
+    lua_pushcclosure(L, fn, 1);
+    lua_setfield(L, -2, name);
 }
 
 void LuaEngine::bindConfig(Config* cfg) {
-    lua_newtable(L);                  // config
+    lua_newtable(L);
 
-    lua_pushlightuserdata(L, cfg);
-    lua_pushcclosure(L, [](lua_State* L)->int {
-        auto* cfg = static_cast<Config*>(lua_touserdata(L, lua_upvalueindex(1)));
+    addMethod(L, "resize", cfg, [](lua_State* L) -> int {
+        auto* cfg = (Config*)lua_touserdata(L, lua_upvalueindex(1));
         int w = (int)luaL_checkinteger(L, 1);
         int h = (int)luaL_checkinteger(L, 2);
         cfg->width = w;
         cfg->height = h;
         if (cfg->window) glfwSetWindowSize(cfg->window, w, h);
         return 0;
-    }, 1);
-    lua_setfield(L, -2, "resize");
+    });
 
-    lua_newtable(L);                  // metatable
+    addMethod(L, "windowSize", cfg, [](lua_State* L) -> int {
+        auto* cfg = (Config*)lua_touserdata(L, lua_upvalueindex(1));
+        lua_pushinteger(L, cfg->width);
+        lua_pushinteger(L, cfg->height);
+        return 2;
+    });
 
-    // __index getter
+    addMethod(L, "gridSize", cfg, [](lua_State* L) -> int {
+        auto* cfg = (Config*)lua_touserdata(L, lua_upvalueindex(1));
+        lua_pushinteger(L, cfg->gridx);
+        lua_pushinteger(L, cfg->gridy);
+        return 2;
+    });
+
+    addMethod(L, "getWidth", cfg, [](lua_State* L) -> int {
+        auto* cfg = (Config*)lua_touserdata(L, lua_upvalueindex(1));
+        lua_pushinteger(L, cfg->width);
+        return 1;
+    });
+
+    addMethod(L, "getHeight", cfg, [](lua_State* L) -> int {
+        auto* cfg = (Config*)lua_touserdata(L, lua_upvalueindex(1));
+        lua_pushinteger(L, cfg->height);
+        return 1;
+    });
+
+    lua_newtable(L);
     lua_pushlightuserdata(L, cfg);
-    lua_pushcclosure(L, [](lua_State* L)->int {
-        Config* cfg = (Config*)lua_touserdata(L, lua_upvalueindex(1));
+    lua_pushcclosure(L, [](lua_State* L) -> int {
+        auto* cfg = (Config*)lua_touserdata(L, lua_upvalueindex(1));
         std::string key = luaL_checkstring(L, 2);
-        if (key == "width")  lua_pushinteger(L, cfg->width);
+        if (key == "width") lua_pushinteger(L, cfg->width);
         else if (key == "height") lua_pushinteger(L, cfg->height);
         else lua_pushnil(L);
         return 1;
     }, 1);
     lua_setfield(L, -2, "__index");
+    lua_setmetatable(L, -2);
 
-    // __newindex setter
-    // lua_pushlightuserdata(L, cfg);
-    // lua_pushcclosure(L, [](lua_State* L)->int {
-    //     Config* cfg = (Config*)lua_touserdata(L, lua_upvalueindex(1));
-    //     std::string key = luaL_checkstring(L, 2);
-    //     int value = (int)luaL_checkinteger(L, 3);
-    //     if (key == "width") cfg->width = value;
-    //     else if (key == "height") cfg->height = value;
-    //     return 0;
-    // }, 1);
-    // lua_setfield(L, -2, "__newindex");
-
-    lua_setmetatable(L, -2);  // setmetatable(config, mt)
     lua_setglobal(L, "cfg");
 }
 
-void LuaEngine::bindGrid(Grid* grid) {
-    lua_newtable(L);
+void LuaEngine::bindGrid(Grid* g) {
     lua_newtable(L);
 
-    lua_pushlightuserdata(L, grid);
-    lua_pushcclosure(L, [](lua_State* L)->int {
-        Grid* g = (Grid*)lua_touserdata(L, lua_upvalueindex(1));
-        std::string key = luaL_checkstring(L, 2);
-        if (key == "step") {
-            lua_pushlightuserdata(L, g);
-            lua_pushcclosure(L, [](lua_State* L)->int {
-                Grid* g = (Grid*)lua_touserdata(L, lua_upvalueindex(1));
-                g->step();
-                return 0;
-            }, 1);
-            return 1;
-        } else if (key == "stop") {
-            lua_pushlightuserdata(L, g);
-            lua_pushcclosure(L, [](lua_State* L)->int {
-                Grid* g = (Grid*)lua_touserdata(L, lua_upvalueindex(1));
-                g->stop();
-                return 0;
-            }, 1);
-            return 1;
-        } else if (key == "start") {
-            lua_pushlightuserdata(L, g);
-            lua_pushcclosure(L, [](lua_State* L)->int {
-                Grid* g = (Grid*)lua_touserdata(L, lua_upvalueindex(1));
-                g->start();
-                return 0;
-            }, 1);
-            return 1;
-        } else if (key == "reset") {
-            lua_pushlightuserdata(L, g);
-            lua_pushcclosure(L, [](lua_State* L)->int {
-                Grid* g = (Grid*)lua_touserdata(L, lua_upvalueindex(1));
-                g->reset();
-                return 0;
-            }, 1);
-            return 1;
-        }
-        lua_pushnil(L);
-        return 1;
-    }, 1);
-    lua_setfield(L, -2, "__index");
+    addMethod(L, "start", g, [](lua_State* L) -> int {
+        ((Grid*)lua_touserdata(L, lua_upvalueindex(1)))->start();
+        return 0;
+    });
 
-    lua_setmetatable(L, -2);
+    addMethod(L, "stop", g, [](lua_State* L) -> int {
+        ((Grid*)lua_touserdata(L, lua_upvalueindex(1)))->stop();
+        return 0;
+    });
+
+    addMethod(L, "reset", g, [](lua_State* L) -> int {
+        ((Grid*)lua_touserdata(L, lua_upvalueindex(1)))->reset();
+        return 0;
+    });
+
+    addMethod(L, "step", g, [](lua_State* L) -> int {
+        ((Grid*)lua_touserdata(L, lua_upvalueindex(1)))->step();
+        return 0;
+    });
+
     lua_setglobal(L, "grid");
 }
 

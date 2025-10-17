@@ -161,6 +161,6 @@ void Config::printAllParams() const {
     std::cout << "step <n_steps>            : do n_steps simulation steps\n";
     std::cout << "reset                     : regenerate random grid\n";
     std::cout << "resize <width> <height>   : resize window to width and height values (. to keep current)\n";
-    std::cout << "get cfg width/height      : print current window width/height\n";
+    std::cout << "get <globalProperty>      : print current global property (windowSize, gridSize)\n";
     std::cout << "================================\n";
 }
