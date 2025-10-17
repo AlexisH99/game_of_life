@@ -40,6 +40,15 @@ Renderer::Renderer(const Grid* grid, const Config* cfg) {
     texture->allocate(GL_RG32UI, grid->words_per_row, grid->rows, GL_RG_INTEGER, GL_UNSIGNED_INT, grid->getGrid32Ptr());
 }
 
+void Renderer::reset() {
+    texture->bind(0);
+    texture->set_parameters();
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    texture->allocate(GL_RG32UI, grid->words_per_row, grid->rows, GL_RG_INTEGER, GL_UNSIGNED_INT, grid->getGrid32Ptr());
+}
+
 void Renderer::render() {
     texture->set_data(grid->words_per_row, grid->rows, GL_RG_INTEGER, GL_UNSIGNED_INT, grid->getGrid32Ptr());
 
@@ -53,5 +62,4 @@ void Renderer::render() {
     glUniform2f(glGetUniformLocation(shaders->get(), "gridSize"), cfg->gridx, cfg->gridy);
     vao->bind();
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    
 }

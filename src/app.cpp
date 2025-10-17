@@ -21,6 +21,7 @@ void Application::run() {
     initGlad();
     initGrid();
     initRender();
+    initController();
     initConsole();
     mainLoop();
 }
@@ -192,6 +193,10 @@ int Application::initGlad() {
 
 void Application::initRender() {
     renderer = std::make_unique<Renderer>(grid.get(), cfg.get());
+}
+
+void Application::initController() {
+    controller = std::make_unique<Controller>(cfg.get(), window.get(), grid.get(), console.get(), renderer.get());
 }
 
 void Application::mainLoop() {

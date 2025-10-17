@@ -11,8 +11,6 @@ Grid::~Grid() {
 }
 
 void Grid::initSize() {
-    gridX = cfg->gridx;
-    gridY = cfg->gridy;
     rows = cfg->gridy + 2;
     words_per_row = w_for_w(cfg->gridx);
     blocksize = 1;
@@ -22,7 +20,7 @@ void Grid::initSize() {
 }
 
 void Grid::initMask() {
-    int pad = ((words_per_row * 64) - gridX);
+    int pad = ((words_per_row * 64) - cfg->gridx);
     leftpad = pad / 2;
     int rightpad = leftpad + pad % 2;
     for (int r = 1; r < rows-1; r++) {

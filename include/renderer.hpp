@@ -13,6 +13,7 @@ class Renderer {
     public:
         Renderer(const Grid* grid, const Config* cfg);
 
+        void reset();
         void render();
 
     private:

@@ -6,6 +6,7 @@
 #include "luaengine.hpp"
 #include "console.hpp"
 #include "renderer.hpp"
+#include "controller.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
@@ -29,6 +30,7 @@ class Application {
         int initWindow();
         int initGlad();
         void initRender();
+        void initController();
         void initConsole();
         void mainLoop();
         void cleanup();
@@ -46,6 +48,7 @@ class Application {
         std::unique_ptr<LuaEngine> luaengine;
         std::unique_ptr<Console> console;
         std::unique_ptr<Renderer> renderer;
+        std::unique_ptr<Controller> controller;
 
         int fbWidth, fbHeight;
 

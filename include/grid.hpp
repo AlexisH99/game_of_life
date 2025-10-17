@@ -17,19 +17,22 @@ class Grid {
 
         void initSize();
         void initMask();
+
         void initCheckerGrid();
         void initRandomGrid();
+
         void reset();
         void step();
         void start();
         void stop();
+        
         void printMask();
         void printCurrent();
+
         std::vector<uint64_t> getGrid();
         std::vector<uint64_t> getMask();
         const uint32_t* getGrid32Ptr() const;
-        int gridX;
-        int gridY;
+
         int leftpad;
         int rows;
         int words_per_row;
