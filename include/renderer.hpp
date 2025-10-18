@@ -3,11 +3,8 @@
 #include "gl_wrappers.hpp"
 #include "config.hpp"
 #include "grid.hpp"
+
 #include <memory>
-#include <cstdlib>
-#include <iostream>
-#include <vector>
-#include <format>
 
 class Renderer {
     public:

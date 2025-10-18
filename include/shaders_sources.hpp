@@ -1,6 +1,5 @@
 # pragma once
 
-
 static constexpr const char* mainVert = R"(
     #version 330 core
 

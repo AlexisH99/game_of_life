@@ -1,6 +1,7 @@
 #include "renderer.hpp"
 #include "shaders_sources.hpp"
 
+
 Renderer::Renderer(const Grid* grid, const Config* cfg) {
     this->cfg = cfg;
     this->grid = grid;

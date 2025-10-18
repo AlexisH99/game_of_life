@@ -1,6 +1,5 @@
 #include "shader.hpp"
-#include "app.hpp"
-#include <string>
+
 #include <iostream>
 
 Shaders::Shaders() {

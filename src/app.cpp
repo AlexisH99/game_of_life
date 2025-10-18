@@ -12,7 +12,7 @@ Application::Application() {
 }
 
 Application::~Application() {
-    cleanup();
+    
 }
 
 void Application::run() {
@@ -21,7 +21,6 @@ void Application::run() {
     initGlad();
     initGrid();
     initRender();
-    initController();
     initConsole();
     mainLoop();
 }
@@ -127,19 +126,6 @@ void Application::loadConfig() {
     }
 }
 
-void Application::initGrid() {
-    grid = std::make_unique<Grid>();
-    grid->cfg = cfg.get();
-    grid->pause = cfg->freeze_at_start;
-    grid->initSize();
-    grid->initMask();
-    if (cfg->checker == true) {
-        grid->initCheckerGrid();
-    } else {
-        grid->initRandomGrid();
-    }
-}
-
 int Application::initWindow() {
     window = std::make_unique<Window>(cfg->width, cfg->height, title);
     cfg->window = window->get();
@@ -157,17 +143,6 @@ int Application::initWindow() {
     }
 
     return 0;
-}
-
-void Application::initConsole() {
-    console = std::make_unique<Console>();
-    luaengine = std::make_unique<LuaEngine>();
-    console->init();
-    luaengine->init();
-    luaengine->bindConfig(cfg.get());
-    luaengine->bindGrid(grid.get());
-    console->lua = luaengine.get();
-    luaengine->registerPrintRedirect([&](const std::string& s){ console->log(s); });
 }
 
 int Application::initGlad() {
@@ -191,12 +166,26 @@ int Application::initGlad() {
     return 0;
 }
 
+void Application::initGrid() {
+    grid = std::make_unique<Grid>();
+    grid->cfg = cfg.get();
+    grid->pause = cfg->freeze_at_start;
+    grid->initSize();
+    grid->initMask();
+    if (cfg->checker == true) {
+        grid->initCheckerGrid();
+    } else {
+        grid->initRandomGrid();
+    }
+}
+
 void Application::initRender() {
     renderer = std::make_unique<Renderer>(grid.get(), cfg.get());
 }
 
-void Application::initController() {
-    controller = std::make_unique<Controller>(cfg.get(), window.get(), grid.get(), console.get(), renderer.get());
+void Application::initConsole() {
+    console = std::make_unique<Console>(cfg.get(), window.get(), grid.get(), renderer.get());
+    console->init();
 }
 
 void Application::mainLoop() {
@@ -232,8 +221,4 @@ void Application::mainLoop() {
             lastTime = currentTime;
         }
     }
-}
-
-void Application::cleanup() {
-
 }

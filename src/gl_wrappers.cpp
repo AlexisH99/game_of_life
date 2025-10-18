@@ -1,4 +1,5 @@
 #include "gl_wrappers.hpp"
+
 #include <utility>
 #include <stdexcept>
 #include <string>
@@ -30,7 +31,7 @@ GLVertexBuffer& GLVertexBuffer::operator=(GLVertexBuffer&& other) noexcept {
     return *this;
 }
 
-GLBuffer::GLBuffer([[maybe_unused]]GLenum tgt = GL_ARRAY_BUFFER)
+GLBuffer::GLBuffer([[maybe_unused]]GLenum tgt)
     : target(tgt)
 {
     glGenBuffers(1, &id);
@@ -65,7 +66,7 @@ GLBuffer& GLBuffer::operator=(GLBuffer&& other) noexcept {
     return *this;
 }
 
-GLTexture::GLTexture([[maybe_unused]]GLenum tgt = GL_TEXTURE_2D) 
+GLTexture::GLTexture([[maybe_unused]]GLenum tgt) 
     : target(tgt)
 {
     glGenTextures(1, &id);

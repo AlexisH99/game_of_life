@@ -1,11 +1,6 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
@@ -27,9 +22,6 @@ class Config {
         
         void initConfig(const std::string& path);
         void printAllParams() const;
-
-        static int lua_getWidth(lua_State* L);
-        static int lua_getHeight(lua_State* L);
 
         GLFWwindow* window = nullptr;
 

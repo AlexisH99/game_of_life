@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string>
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include <string>
 
 class Window {
     public:

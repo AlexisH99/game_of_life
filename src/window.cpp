@@ -1,4 +1,5 @@
 #include "window.hpp"
+
 #include <iostream>
 #include <cstdlib>
 

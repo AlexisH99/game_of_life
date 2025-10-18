@@ -1,4 +1,5 @@
-#include <grid.hpp>
+#include "grid.hpp"
+
 #include <iostream>
 #include <cstdlib>
 
@@ -14,9 +15,14 @@ void Grid::initSize() {
     rows = cfg->gridy + 2;
     words_per_row = w_for_w(cfg->gridx);
     blocksize = 1;
+    
     mask.resize(rows * words_per_row);
     current.resize(rows * words_per_row);
     next.resize(rows * words_per_row);
+    
+    mask.assign(rows * words_per_row, 0ULL);
+    current.assign(rows * words_per_row, 0ULL);
+    next.assign(rows * words_per_row, 0ULL);
 }
 
 void Grid::initMask() {

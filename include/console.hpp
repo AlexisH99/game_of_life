@@ -1,37 +1,45 @@
 #pragma once
+
 #include "gl_wrappers.hpp"
 #include "config.hpp"
+#include "window.hpp"
 #include "grid.hpp"
-#include "luaengine.hpp"
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
+#include "renderer.hpp"
+
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <string>
-#include <functional>
 #include <memory>
 
 class Console {
     public:
-        Console();
+        Console(Config* cfg, Window* win, Grid* grid, Renderer* renderer);
         ~Console();
 
         void init();
         void draw(GLFWwindow* window);
         void log(const std::string& s);
+        void execute(const std::string& command);
         void handleInput(GLFWwindow* win, int key, int action);
         void handleChar(unsigned int codepoint);
         void cleanup();
 
         bool visible = false;
-        LuaEngine* lua = nullptr;
+        bool abortRequested = false;
 
     private:
+        template<typename T>
+        std::optional<T> from_string(const std::string& s);
         void appendText(std::vector<float>& pts, int x, int y, const std::string& text);
+        void command_start();
+        void command_stop();
+        void command_regen();
+        void command_step(int n_step = 1, float delay = 0.0);
+        void setWindowSize(int w, int h);
+        void setGridSize(int x, int y);
+        void getWindowSize();
+        void getGridSize();
 
         std::vector<std::string> lines;
         std::string input;
@@ -42,4 +50,9 @@ class Console {
         std::unique_ptr<GLProgram> shaders;
         int fbWidth, fbHeight;
         float cWidth, cHeight;
+
+        Config* cfg;
+        Window* win;
+        Grid* grid;
+        Renderer* renderer;
 };

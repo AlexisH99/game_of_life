@@ -4,10 +4,15 @@
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include <iostream>
+#include <chrono>
+#include <thread>
 #include <sstream>
+#include <charconv>
+#include <functional>
 
-Console::Console() {
+Console::Console(Config* cfg, Window* win, Grid* grid, Renderer* renderer)
+    : cfg(cfg), win(win), grid(grid), renderer(renderer)
+{
 
 }
 
@@ -21,9 +26,150 @@ void Console::init() {
     shaders = std::make_unique<GLProgram>(consoleVert, consoleFrag);
 }
 
+template<typename T>
+std::optional<T> Console::from_string(const std::string& s) {
+    static_assert(std::is_arithmetic_v<T>, "T doit être un type numérique");
+
+    T value{};
+    auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), value);
+
+    if (ec == std::errc()) return value;
+    return std::nullopt;
+}
+
 void Console::log(const std::string& s) {
     lines.push_back(s);
     if (lines.size() > 100) lines.erase(lines.begin());
+}
+
+void Console::execute(const std::string& command) {
+    log("> " + command);
+
+    // === 1. Tokenize ===
+    std::istringstream iss(command);
+    std::vector<std::string> tokens;
+    std::string token;
+    while (iss >> token)
+        tokens.push_back(token);
+
+    if (tokens.empty()) return;
+    const std::string& cmd = tokens[0];
+
+    // === 2. Commandes simples (start, stop, regen, step...) ===
+    static const std::unordered_map<std::string, std::function<void(const std::vector<std::string>&)>> baseCommands = {
+        { "start", [&](const auto&) { command_start(); } },
+        { "stop",  [&](const auto&) { command_stop(); } },
+        { "regen", [&](const auto&) { command_regen(); } },
+
+        { "step", [&](const auto& args) {
+            if (args.size() == 1) {
+                command_step();
+            } else if (args.size() == 2) {
+                auto n = from_string<int>(args[1]);
+                if (!n) log("Usage: step <int>");
+                else command_step(*n);
+            } else if (args.size() == 3) {
+                auto n = from_string<int>(args[1]);
+                auto d = from_string<float>(args[2]);
+                if (!n || !d) log("Usage: step <int> <float>");
+                else command_step(*n, *d);
+            } else log("Usage: step <int> [float]");
+        }},
+
+        { "help", [&](const auto&) {
+            log("Available commands:");
+            log("  start / stop / regen / step");
+            log("  get <windowSize|gridSize>");
+            log("  set <windowSize|gridSize> <values>");
+        }},
+    };
+
+    // === 3. Commande "get" ===
+    if (cmd == "get") {
+        if (tokens.size() != 2) {
+            log("Usage: get <windowSize|gridSize>");
+            return;
+        }
+        const auto& sub = tokens[1];
+        if (sub == "windowSize") {
+            getWindowSize();
+        } else if (sub == "gridSize") {
+            getGridSize();
+        } else {
+            log("Unknown parameter: " + sub);
+        }
+        return;
+    }
+
+    // === 4. Commande "set" ===
+    if (cmd == "set") {
+        if (tokens.size() < 2) {
+            log("Usage: set <windowSize|gridSize> <values>");
+            return;
+        }
+
+        const auto& sub = tokens[1];
+
+        // ---- set windowSize <int|.> <int|.> ----
+        if (sub == "windowSize") {
+            if (tokens.size() != 4) {
+                log("Usage: set windowSize <int|.> <int|.>");
+                return;
+            }
+            auto w_str = tokens[2], h_str = tokens[3];
+
+            if (w_str == "." && h_str == ".") {
+                log("Unchanged window size");
+                return;
+            }
+
+            auto w = (w_str == ".") ? std::optional<int>() : from_string<int>(w_str);
+            auto h = (h_str == ".") ? std::optional<int>() : from_string<int>(h_str);
+
+            if ((w_str != "." && !w) || (h_str != "." && !h)) {
+                log("Error: invalid arguments");
+                log("Usage: set windowSize <int|.> <int|.>");
+                return;
+            }
+
+            setWindowSize(w.value_or(cfg->width), h.value_or(cfg->height));
+            return;
+        }
+
+        // ---- set gridSize <int> <int> ----
+        if (sub == "gridSize") {
+            if (tokens.size() != 4) {
+                log("Usage: set gridSize <int> <int>");
+                return;
+            }
+
+            auto gx = from_string<int>(tokens[2]);
+            auto gy = from_string<int>(tokens[3]);
+
+            if (!gx || !gy) {
+                log("Error: invalid arguments");
+                log("Usage: set gridSize <int> <int>");
+                return;
+            }
+
+            setGridSize(*gx, *gy);
+            return;
+        }
+
+        log("Unknown parameter: " + sub);
+        return;
+    }
+
+    // === 5. Commandes de base ===
+    auto it = baseCommands.find(cmd);
+    if (it != baseCommands.end()) {
+        it->second(tokens);
+        return;
+    }
+
+    // === 6. Commande inconnue ===
+    log("Unknown command: " + cmd);
+    log("Type 'help' for available commands.");
 }
 
 void Console::draw(GLFWwindow* window) {
@@ -78,10 +224,14 @@ void Console::handleInput([[maybe_unused]]GLFWwindow* win, int key, int action) 
     if (!visible) return;
     if (action == GLFW_PRESS || action == GLFW_REPEAT) {
         if (key == GLFW_KEY_ENTER) {
-            lua->execute(input);
+            execute(input);
             input.clear();
         } else if (key == GLFW_KEY_BACKSPACE && !input.empty()) {
             input.pop_back();
+        }
+        if (key == GLFW_KEY_C && (glfwGetKey(win, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
+                          glfwGetKey(win, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)) {
+            abortRequested = true;
         }
     }
 }
@@ -104,6 +254,79 @@ void Console::appendText(std::vector<float>& pts, int x, int y, const std::strin
             }
         }
     }
+}
+
+void Console::command_start() {
+    grid->pause = false;
+    if (cfg->vsync) {
+        glfwSwapInterval(1);
+    } else {
+        glfwSwapInterval(0);
+    }
+}
+
+void Console::command_stop() {
+    grid->pause = true;
+    glfwSwapInterval(1);
+}
+
+void Console::command_regen() {
+    grid->initRandomGrid();
+}
+
+void Console::command_step(int n_step, float delay) {
+    grid->pause = true;
+
+    double lastTime = glfwGetTime();
+    double remain_time = 0.0;
+
+    if (!cfg->vsync) glfwSwapInterval(0);
+    for (int i = 0; i < n_step; ++i) {
+        if (abortRequested) {
+            log(std::format("Aborted. {} steps done.", i));
+            break;
+        }
+        
+        grid->step();
+        renderer->render();
+        draw(win->get());
+        glfwSwapBuffers(win->get());
+        glfwPollEvents();
+
+        remain_time = delay - (glfwGetTime() - lastTime);
+        if (remain_time > 0) std::this_thread::sleep_for(std::chrono::duration<double>(remain_time));
+        lastTime = glfwGetTime();
+    }
+    
+    if (!abortRequested) log(std::format("{} steps done.", n_step));
+
+    glfwSwapInterval(1);
+
+    abortRequested = false;
+}
+
+void Console::setWindowSize(int w, int h) {
+    cfg->width = w;
+    cfg->height = h;
+    if (cfg->window) glfwSetWindowSize(cfg->window, w, h);
+}
+
+void Console::setGridSize(int x, int y) {
+    cfg->gridx = x;
+    cfg->gridy = y;
+    grid->initSize();
+    grid->initMask();
+    grid->initRandomGrid();
+    renderer->reset();
+    renderer->render();
+}
+
+void Console::getWindowSize() {
+    log(std::format("Window size: {}x{}", cfg->width, cfg->height));
+}
+
+void Console::getGridSize() {
+    log(std::format("Grid size: {}x{}", cfg->gridx, cfg->gridy));
 }
 
 void Console::cleanup() {
