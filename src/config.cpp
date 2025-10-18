@@ -157,11 +157,12 @@ void Config::printAllParams() const {
     std::cout << "One time step             : Right arrow\n";
     std::cout << "Open/Close console        : F1\n";
     std::cout << "=========== COMMANDS ===========\n";
+    std::cout << "help                      : show help for commands\n";
     std::cout << "stop/start                : pause/unpause simulation\n";
     std::cout << "step                      : do one simulation step\n";
-    std::cout << "step <n_steps>            : do n_steps simulation steps\n";
-    std::cout << "reset                     : regenerate random grid\n";
-    std::cout << "resize <width> <height>   : resize window to width and height values (. to keep current)\n";
+    std::cout << "step <n_steps> <delay>    : do n_steps simulation steps with delay in seconds\n";
+    std::cout << "regen                     : regenerate random grid\n";
+    std::cout << "set <width> <height>      : set global property (windowSize, gridSize)\n";
     std::cout << "get <globalProperty>      : print current global property (windowSize, gridSize)\n";
     std::cout << "================================\n";
 }
