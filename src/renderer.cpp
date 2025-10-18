@@ -8,7 +8,7 @@ Renderer::Renderer(const Grid* grid, const Config* cfg) {
 
     vao = std::make_unique<GLVertexBuffer>();
     vbo = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);
-    texture = std::make_unique<GLTexture>(GL_TEXTURE_2D);
+    texture = std::make_unique<GLTextureBuffer>();
     shaders = std::make_unique<GLProgram>(mainVert, mainFrag);
 
     float vertices[] = {
@@ -34,33 +34,33 @@ Renderer::Renderer(const Grid* grid, const Config* cfg) {
     glEnableVertexAttribArray(1);
 
     texture->bind(0);
-    texture->set_parameters();
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    texture->allocate(GL_RG32UI, grid->words_per_row, grid->rows, GL_RG_INTEGER, GL_UNSIGNED_INT, grid->getGrid32Ptr());
+    texture->allocate(GL_RG32UI, grid->rows * grid->words_per_row * sizeof(uint32_t) * 2, grid->getGrid32Ptr());
 }
 
 void Renderer::reset() {
     texture->bind(0);
-    texture->set_parameters();
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    texture->allocate(GL_RG32UI, grid->words_per_row, grid->rows, GL_RG_INTEGER, GL_UNSIGNED_INT, grid->getGrid32Ptr());
+    texture->allocate(GL_RG32UI, grid->rows * grid->words_per_row * sizeof(uint32_t) * 2, grid->getGrid32Ptr());
 }
 
 void Renderer::render() {
-    texture->set_data(grid->words_per_row, grid->rows, GL_RG_INTEGER, GL_UNSIGNED_INT, grid->getGrid32Ptr());
+    texture->update(grid->rows * grid->words_per_row * sizeof(uint32_t) * 2, grid->getGrid32Ptr());
 
     glClearColor(1.0f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     
     shaders->use();
+    texture->bind(0);
     glUniform1i(glGetUniformLocation(shaders->get(), "packedGrid"), 0);
     glUniform1i(glGetUniformLocation(shaders->get(), "leftpad"), grid->leftpad);
     glUniform2f(glGetUniformLocation(shaders->get(), "windowSize"), cfg->width, cfg->height);
     glUniform2f(glGetUniformLocation(shaders->get(), "gridSize"), cfg->gridx, cfg->gridy);
+    glUniform1i(glGetUniformLocation(shaders->get(), "words_per_row"), grid->words_per_row);
     vao->bind();
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }

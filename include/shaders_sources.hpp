@@ -16,10 +16,11 @@ static constexpr const char* mainVert = R"(
 static constexpr const char* mainFrag = R"(
     #version 330 core
 
-    uniform usampler2D packedGrid;  // plus de layout(binding)
+    uniform usamplerBuffer packedGrid;  // plus de layout(binding)
     uniform int leftpad;
     uniform vec2 windowSize;
     uniform vec2 gridSize;
+    uniform int words_per_row;
 
     out vec4 FragColor;
 
@@ -38,13 +39,16 @@ static constexpr const char* mainFrag = R"(
         int word_index = x / 64;
         int bit_index  = x % 64;
 
-        uvec4 texel = texelFetch(packedGrid, ivec2(word_index, y), 0);
-        uint low  = texel.r;
-        uint high = texel.g;
+        // === Index linéaire dans le buffer ===
+        int linearIndex = y * words_per_row + word_index;
 
+        // Chaque texel contient deux uint32 (low/high)
+        uvec2 word = texelFetch(packedGrid, linearIndex).rg;
+
+        // === Extraction du bit vivant ===
         uint alive = (bit_index < 32)
-            ? ((low >> bit_index) & 1u)
-            : ((high >> (bit_index - 32)) & 1u);
+            ? ((word.r >> uint(bit_index)) & 1u)
+            : ((word.g >> uint(bit_index - 32)) & 1u);
 
         float val = float(alive);
         FragColor = vec4(val, val, val, 1.0);

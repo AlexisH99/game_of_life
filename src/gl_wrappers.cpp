@@ -109,6 +109,47 @@ GLTexture& GLTexture::operator=(GLTexture&& other) noexcept {
     return *this;
 }
 
+GLTextureBuffer::GLTextureBuffer() {
+    glGenTextures(1, &texID);
+    glGenBuffers(1, &bufID);
+}
+
+GLTextureBuffer::~GLTextureBuffer() {
+    if (texID) glDeleteTextures(1, &texID);
+    if (bufID) glDeleteBuffers(1, &bufID);
+}
+
+void GLTextureBuffer::bind(GLuint unit) const {
+    glActiveTexture(GL_TEXTURE0 + unit);
+    glBindTexture(GL_TEXTURE_BUFFER, texID);
+}
+
+void GLTextureBuffer::allocate(GLenum internalFormat, GLsizeiptr sizeBytes, const void* data, GLenum usage) {
+    glBindBuffer(GL_TEXTURE_BUFFER, bufID);
+    glBufferData(GL_TEXTURE_BUFFER, sizeBytes, data, usage);
+
+    glBindTexture(GL_TEXTURE_BUFFER, texID);
+    glTexBuffer(GL_TEXTURE_BUFFER, internalFormat, bufID);
+}
+
+void GLTextureBuffer::update(GLsizeiptr sizeBytes, const void* data, GLintptr offset) {
+    glBindBuffer(GL_TEXTURE_BUFFER, bufID);
+    glBufferSubData(GL_TEXTURE_BUFFER, offset, sizeBytes, data);
+}
+
+GLTextureBuffer::GLTextureBuffer(GLTextureBuffer&& other) noexcept
+    : texID(other.texID), bufID(other.bufID)
+{
+    other.texID = 0;
+    other.bufID = 0;
+}
+
+GLTextureBuffer& GLTextureBuffer::operator=(GLTextureBuffer&& other) noexcept {
+    std::swap(texID, other.texID);
+    std::swap(bufID, other.bufID);
+    return *this;
+}
+
 GLProgram::GLProgram(const char* vertSrc, const char* fragSrc) {
     loadFromSource(vertSrc, fragSrc);
 }

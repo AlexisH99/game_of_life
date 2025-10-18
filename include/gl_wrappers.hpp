@@ -64,6 +64,27 @@ class GLTexture {
         GLenum target = 0;
 };
 
+class GLTextureBuffer {
+public:
+    GLTextureBuffer();
+    ~GLTextureBuffer();
+
+    void bind(GLuint unit = 0) const;
+    void allocate(GLenum internalFormat, GLsizeiptr sizeBytes, const void* data = nullptr, GLenum usage = GL_DYNAMIC_DRAW);
+    void update(GLsizeiptr sizeBytes, const void* data, GLintptr offset = 0);
+
+    GLuint getTexID() const { return texID; }
+    GLuint getBufID() const { return bufID; }
+
+    // Move semantics
+    GLTextureBuffer(GLTextureBuffer&& other) noexcept;
+    GLTextureBuffer& operator=(GLTextureBuffer&& other) noexcept;
+
+private:
+    GLuint texID = 0;
+    GLuint bufID = 0;
+};
+
 class GLProgram {
     public:
         GLProgram() = default;

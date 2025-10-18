@@ -22,6 +22,6 @@ class Renderer {
 
         std::unique_ptr<GLVertexBuffer> vao;
         std::unique_ptr<GLBuffer> vbo;
-        std::unique_ptr<GLTexture> texture;
+        std::unique_ptr<GLTextureBuffer> texture;
         std::unique_ptr<GLProgram> shaders;
 };
