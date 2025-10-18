@@ -26,13 +26,14 @@ By hitting F1, a console opens and a few commands are available:
 
 | Command       | Args               | Action               |
 | ------------- | ------------------ | -------------------- |
+| help          | none               | show help on commands |
 | start         | none               | unpause simulation   |
 | stop          | none               | pause simulation     |
-| reset         | none               | reset simulation     |
+| regen         | none               | reset simulation     |
 | step          | none               | do one step          |
-| step          | \<n_steps\>        | do n_steps step      |
-| resize        | \<w\> \<h\>        | resize window to w*h size (. as arg to keep previous value) |
-| get           | \<globalProperty\> | print global property |
+| step          | \<n_steps\> \<delay\> | do n_steps steps with delay |
+| set           | \<globalProperty\> [args] | set global property according to args |
+| get           | none               | print global property |
 
 Global properties: `windowSize`, `gridSize`
 
@@ -40,8 +41,8 @@ Next things to implement :
 
 - More global properties
 - Command to resize grid : reinitGrid and reinitRenderer to be done
-- `step n_step` command in C++ side to get rendering between each step.
-- `step n_step` command variant to get slowed loop (time per step as second argument)
+- `step n_step` command in C++ side to get rendering between each step. **DONE**
+- `step n_step` command variant to get slowed loop (time per step as second argument) **DONE**
 - `help` command
 - `set` or `toogle` commands for specific parameters
 - Scrollable console (up to 1000 lines)
