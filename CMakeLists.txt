@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(game_of_life LANGUAGES CXX)
+project(game_of_life LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -23,6 +23,22 @@ FetchContent_Declare(
     GIT_TAG v3.12.0
 )
 FetchContent_MakeAvailable(nlohmann_json)
+
+FetchContent_Declare(
+  lua
+  GIT_REPOSITORY https://github.com/lua/lua.git
+  GIT_TAG v5.4.7
+)
+FetchContent_GetProperties(lua)
+if (NOT lua_POPULATED)
+    FetchContent_MakeAvailable(lua)
+    file(GLOB LUA_SRC ${lua_SOURCE_DIR}/*.c)
+    list(REMOVE_ITEM LUA_SRC "${lua_SOURCE_DIR}/onelua.c")
+
+    add_library(lua STATIC ${LUA_SRC})
+    target_compile_options(lua PRIVATE -w)
+    target_include_directories(lua PUBLIC ${lua_SOURCE_DIR})
+endif()
 
 add_subdirectory(external/glad)
 
@@ -52,12 +68,17 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 add_executable(game_of_life 
     src/main.cpp
     src/app.cpp
-    src/grid.cpp
     src/config.cpp
+    src/grid.cpp
+    src/window.cpp
+    src/gl_wrappers.cpp
+    src/shader.cpp
+    src/renderer.cpp
+    src/console.cpp
     ${APP_RES}
 )
 
 target_include_directories(game_of_life PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(game_of_life PRIVATE glfw glad nlohmann_json::nlohmann_json)
+target_link_libraries(game_of_life PRIVATE glfw glad lua nlohmann_json::nlohmann_json)
 target_compile_options(game_of_life PRIVATE -Wall -Wextra -Wpedantic)
 target_link_options(game_of_life PRIVATE ${APP_RES})

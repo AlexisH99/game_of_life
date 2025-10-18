@@ -1,4 +1,7 @@
 #include "config.hpp"
+
+#include <glad/gl.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -152,5 +155,14 @@ void Config::printAllParams() const {
     std::cout << "========= KEY BINDINGS =========\n";
     std::cout << "Pause/unpause simulation  : Space\n";
     std::cout << "One time step             : Right arrow\n";
+    std::cout << "Open/Close console        : F1\n";
+    std::cout << "=========== COMMANDS ===========\n";
+    std::cout << "help                      : show help for commands\n";
+    std::cout << "stop/start                : pause/unpause simulation\n";
+    std::cout << "step                      : do one simulation step\n";
+    std::cout << "step <n_steps> <delay>    : do n_steps simulation steps with delay in seconds\n";
+    std::cout << "regen                     : regenerate random grid\n";
+    std::cout << "set <width> <height>      : set global property (windowSize, gridSize)\n";
+    std::cout << "get <globalProperty>      : print current global property (windowSize, gridSize)\n";
     std::cout << "================================\n";
 }

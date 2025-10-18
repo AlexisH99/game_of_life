@@ -1,6 +1,8 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include <glad/gl.h>
+#include <GLFW/glfw3.h>
 
 using json = nlohmann::json;
 
@@ -20,6 +22,8 @@ class Config {
         
         void initConfig(const std::string& path);
         void printAllParams() const;
+
+        GLFWwindow* window = nullptr;
 
     private:
         std::string path;

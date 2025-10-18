@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "GLFW/glfw3.h"
 
 #include <windows.h>
 #include <iostream>
@@ -6,39 +7,21 @@
 #include <vector>
 #include <format>
 
-void checkCompileErrors(unsigned int shader, std::string type) {
-    int success;
-    char infoLog[512];
-    if (type != "PROGRAM") {
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(shader, 512, NULL, infoLog);
-            std::cerr << "Erreur compilation shader (" << type << "): " << infoLog << std::endl;
-        }
-    } else {
-        glGetProgramiv(shader, GL_LINK_STATUS, &success);
-        if (!success) {
-            glGetProgramInfoLog(shader, 512, NULL, infoLog);
-            std::cerr << "Erreur link program: " << infoLog << std::endl;
-        }
-    }
-}
-
 Application::Application() {
 
 }
 
 Application::~Application() {
-    cleanup();
+    
 }
 
 void Application::run() {
     loadConfig();
-    initGrid();
     initWindow();
     initGlad();
-    initShaders();
+    initGrid();
     initRender();
+    initConsole();
     mainLoop();
 }
 
@@ -46,8 +29,8 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
     Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
     if (app) {
         glViewport(0, 0, width, height);
-        app->cfg.width = width;
-        app->cfg.height = height;
+        app->cfg->width = width;
+        app->cfg->height = height;
     }
 }
 
@@ -105,64 +88,55 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
     Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
     glfwMakeContextCurrent(window);
     if (app) {
-        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-            app->pause = !app->pause;
-            if (app->pause) {
+        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !app->console->visible) {
+            app->grid->pause = !app->grid->pause;
+            if (app->grid->pause) {
                 glfwSwapInterval(1);
             } else {
-                if (!(app->cfg.vsync)) {
+                if (!(app->cfg->vsync)) {
                     glfwSwapInterval(0);
                 }
             }
         }
-        if (app->pause && key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
-            app->grid.step();
+        if (app->grid->pause && key == GLFW_KEY_RIGHT && action == GLFW_PRESS && !app->console->visible) {
+            app->grid->step();
+        }
+        if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
+            app->console->visible = !app->console->visible;
+        }
+
+        if (app->console->visible) {
+            app->console->handleInput(app->window->get(), key, action);
         }
     }
 }
 
-void Application::loadConfig() {
-    cfg.initConfig("config.jsonc");
-    cfg.printAllParams();
-    pause = cfg.freeze_at_start;
-    if (cfg.width < 120) {
-        std::cout << "Warning : minimum allowed width is 120. Moved back to this value.\n";
-        cfg.width = 120;
-    }
+void Application::char_callback(GLFWwindow* window, unsigned int codepoint){
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    app->console->handleChar(codepoint);
 }
 
-void Application::initGrid() {
-    grid.initSize(cfg.gridx, cfg.gridy, 1);
-    grid.initMask();
-    if (cfg.checker == true) {
-        grid.initCheckerGrid();
-    } else {
-        grid.initRandomGrid();
+void Application::loadConfig() {
+    cfg = std::make_unique<Config>();
+    cfg->initConfig("config.jsonc");
+    cfg->printAllParams();
+    if (cfg->width < 120) {
+        std::cout << "Warning : minimum allowed width is 120. Moved back to this value.\n";
+        cfg->width = 120;
     }
 }
 
 int Application::initWindow() {
-    if (!glfwInit()) {
-        std::cerr << "Error GFLW init" << std::endl;
-        return -1;
-    }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    window = glfwCreateWindow(cfg.width, cfg.height, title.c_str(), nullptr, nullptr);
-    if (!window) {
-        std::cerr << "Error window creation" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
-    set_window_icon_from_resource(window);
-    glfwSetWindowUserPointer(window, this);
-    glfwSetKeyCallback(window, key_callback);
+    window = std::make_unique<Window>(cfg->width, cfg->height, title);
+    cfg->window = window->get();
+    window->makeContextCurrent();
+    window->setUserPointer(this);
+    set_window_icon_from_resource(window->get());
     
-    if (cfg.vsync || (pause & !cfg.vsync)) {
+    glfwSetKeyCallback(window->get(), key_callback);
+    glfwSetCharCallback(window->get(), char_callback);
+    
+    if (cfg->vsync || (cfg->freeze_at_start && !cfg->vsync)) {
         glfwSwapInterval(1);
     } else { 
         glfwSwapInterval(0);
@@ -185,127 +159,33 @@ int Application::initGlad() {
     glGetInternalformativ(GL_TEXTURE_2D, GL_RG32UI, GL_INTERNALFORMAT_SUPPORTED, 1, &supported);
     if (!supported) throw std::runtime_error("GL_RG32UI not supported on this GPU.");
 
-    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    glfwGetFramebufferSize(window->get(), &fbWidth, &fbHeight);
     glViewport(0, 0, fbWidth, fbHeight);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetFramebufferSizeCallback(window->get(), framebuffer_size_callback);
 
     return 0;
 }
 
-void Application::initShaders() {
-    vertexShaderSource = R"(
-        #version 330 core
-
-        layout (location = 0) in vec2 aPos;
-        layout (location = 1) in vec2 aTexCoord;
-
-        out vec2 TexCoord;
-
-        void main() {
-            gl_Position = vec4(aPos, 0.0, 1.0);
-            TexCoord = aTexCoord;
-        }
-    )";
-
-    fragmentShaderSource = R"(
-        #version 330 core
-
-        uniform usampler2D packedGrid;  // plus de layout(binding)
-        uniform int leftpad;
-        uniform vec2 windowSize;
-        uniform vec2 gridSize;
-
-        out vec4 FragColor;
-
-        void main() {
-            vec2 frag = gl_FragCoord.xy - vec2(0.5);
-
-            int gx = int(frag.x * (gridSize.x / windowSize.x));
-            int gy = int(frag.y * (gridSize.y / windowSize.y));
-
-            if (gx < 0 || gx >= int(gridSize.x) || gy < 0 || gy >= int(gridSize.y))
-                discard;
-
-            int y = gy + 1;
-            int x = gx + leftpad;
-
-            int word_index = x / 64;
-            int bit_index  = x % 64;
-
-            uvec4 texel = texelFetch(packedGrid, ivec2(word_index, y), 0);
-            uint low  = texel.r;
-            uint high = texel.g;
-
-            uint alive = (bit_index < 32)
-                ? ((low >> bit_index) & 1u)
-                : ((high >> (bit_index - 32)) & 1u);
-
-            float val = float(alive);
-            FragColor = vec4(val, val, val, 1.0);
-        }
-    )";
-
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    shaderProgram = glCreateProgram();
-
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    checkCompileErrors(vertexShader, "VERTEX");
-
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    checkCompileErrors(fragmentShader, "FRAGMENT");
-
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    checkCompileErrors(shaderProgram, "PROGRAM");
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+void Application::initGrid() {
+    grid = std::make_unique<Grid>();
+    grid->cfg = cfg.get();
+    grid->pause = cfg->freeze_at_start;
+    grid->initSize();
+    grid->initMask();
+    if (cfg->checker == true) {
+        grid->initCheckerGrid();
+    } else {
+        grid->initRandomGrid();
+    }
 }
 
 void Application::initRender() {
-    float vertices[] = {
-        // pos       // texcoords
-        -1.0f,  1.0f,  0.0f, 1.0f, // haut gauche
-        -1.0f, -1.0f,  0.0f, 0.0f, // bas gauche
-        1.0f, -1.0f,  1.0f, 0.0f, // bas droit
+    renderer = std::make_unique<Renderer>(grid.get(), cfg.get());
+}
 
-        -1.0f,  1.0f,  0.0f, 1.0f, // haut gauche
-        1.0f, -1.0f,  1.0f, 0.0f, // bas droit
-        1.0f,  1.0f,  1.0f, 1.0f  // haut droit
-    };
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32UI,
-            grid.words_per_row, grid.rows, 0,
-            GL_RG_INTEGER, GL_UNSIGNED_INT,
-            grid.getGrid32Ptr());
+void Application::initConsole() {
+    console = std::make_unique<Console>(cfg.get(), window.get(), grid.get(), renderer.get());
+    console->init();
 }
 
 void Application::mainLoop() {
@@ -315,50 +195,30 @@ void Application::mainLoop() {
     double fps = 0.0;
     int nbFrames = 0;
 
-    while (!glfwWindowShouldClose(window)) {
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, grid.words_per_row, grid.rows,
-                        GL_RG_INTEGER, GL_UNSIGNED_INT, grid.getGrid32Ptr());
+    while (!glfwWindowShouldClose(window->get())) {
+        renderer->render();
 
-        glClearColor(1.0f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        console->draw(window->get());
         
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glUseProgram(shaderProgram);
-        glUniform1i(glGetUniformLocation(shaderProgram, "packedGrid"), 0);
-        glUniform1i(glGetUniformLocation(shaderProgram, "leftpad"), grid.leftpad);
-        glUniform2f(glGetUniformLocation(shaderProgram, "windowSize"), cfg.width, cfg.height);
-        glUniform2f(glGetUniformLocation(shaderProgram, "gridSize"), cfg.gridx, cfg.gridy);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(window->get());
+        
         glfwPollEvents();
         
-        if (!pause) {
-            grid.step();
+        if (!grid->pause) {
+            grid->step();
         }
 
-        if (cfg.showfps) {
+        if (cfg->showfps) {
             currentTime = glfwGetTime();
             nbFrames++;
             if (currentTime - fpsTimer >= 0.25) {
                 fps = nbFrames / (currentTime - fpsTimer);
                 title = "GOL - FPS: " + std::format("{:.2f}", fps);
-                glfwSetWindowTitle(window, title.c_str());
+                glfwSetWindowTitle(window->get(), title.c_str());
                 nbFrames = 0;
                 fpsTimer = currentTime;
             }
             lastTime = currentTime;
         }
     }
-}
-
-void Application::cleanup() {
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram);
-    glfwDestroyWindow(window);
-    glfwTerminate();
 }
