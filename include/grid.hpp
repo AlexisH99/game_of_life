@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.hpp"
+
 #include <vector>
 #include <random>
 
@@ -14,22 +16,31 @@ class Grid {
         Grid();
         ~Grid();
 
-        void initSize(int gridx, int gridy, int bs);
+        void initSize();
         void initMask();
+
         void initCheckerGrid();
         void initRandomGrid();
+
+        void reset();
         void step();
+        void start();
+        void stop();
+        
         void printMask();
         void printCurrent();
+
         std::vector<uint64_t> getGrid();
         std::vector<uint64_t> getMask();
         const uint32_t* getGrid32Ptr() const;
-        int gridX;
-        int gridY;
+
         int leftpad;
         int rows;
         int words_per_row;
         int blocksize;
+        bool pause = true;
+
+        Config* cfg = nullptr;
     private:
         std::mt19937 rng;
         std::uniform_int_distribution<uint64_t> dist;

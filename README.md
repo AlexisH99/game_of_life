@@ -12,9 +12,47 @@ In real speed:
 
 ![gol_real_speed](https://i.imgur.com/E2rxiD0.gif)
 
+## Bindings
+
+| Key           | Action             |
+| ------------- | ------------------ |
+| F1            | open/close console |
+| Space         | pause/unpause      |
+| Arrow right   | do one step        |
+
+## Commands (**WIP**)
+
+By hitting F1, a console opens and a few commands are available:
+
+| Command       | Args               | Action               |
+| ------------- | ------------------ | -------------------- |
+| help          | none               | show help on commands |
+| start         | none               | unpause simulation   |
+| stop          | none               | pause simulation     |
+| regen         | none               | reset simulation     |
+| step          | none               | do one step          |
+| step          | \<n_steps\> \<delay\> | do n_steps steps with delay |
+| set           | \<globalProperty\> [args] | set global property according to args |
+| get           | none               | print global property |
+
+Global properties: `windowSize`, `gridSize`
+
+Next things to implement : 
+
+- More global properties
+- Command to resize grid : reinitGrid and reinitRenderer to be done
+- `step n_step` command in C++ side to get rendering between each step. **DONE**
+- `step n_step` command variant to get slowed loop (time per step as second argument) **DONE**
+- `help` command
+- `set` or `toogle` commands for specific parameters
+- Scrollable console (up to 1000 lines)
+- Command history (up to 100 commands)
+- Tab and autocompletion like in bash terminal
+
 ## Rules
 
 The number of neighbors is computed according to the Moore neighborhood :
+
 ![moore_neighborhood](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Moore_neighborhood_with_cardinal_directions.svg/375px-Moore_neighborhood_with_cardinal_directions.svg.png)  
 
 | Current State | Live Neighbors | Next State |
@@ -40,13 +78,25 @@ This method avoids heavy instancing, providing excellent performance even for la
 game_of_life/
 ├── src/
 │ ├── main.cpp # Entry point
-│ ├── app.cpp # Implementation (setup, loop, rendering)
-│ ├── grid.cpp # Grid implementation (generation, solving)
-│ ├── config.cpp # Config parsinf implementation
+│ ├── app.cpp # Application class implementation
+│ ├── config.cpp # Config class implementation
+│ ├── console.cpp # Console class and LuaEngine class implementation
+│ ├── gl_wrappers.cpp # OpenGL objects wrappers classes implementation
+│ ├── grid.cpp # Grid class implementation
+│ ├── renderer.cpp # Renderer class implementation
+│ ├── shader.cpp # Shader class implementation
+│ └── window.cpp # Window class implementation
 ├── include/
 │ ├── app.hpp # Application class declaration
+│ ├── config.hpp # Config class declaration
+│ ├── console.hpp # Console class and LuaEngine class declaration
+│ ├── font8x8_basic.hpp # Font for console as header-only file
+│ ├── gl_wrappers.hpp # OpenGL objects wrappers classes declaration
 │ ├── grid.hpp # Grid class declaration
-│ └── config.hpp # Config class declarations
+│ ├── renderer.hpp # Renderer class declaration
+│ ├── shader.hpp # Shader class declaration
+│ ├── shaders_sources.hpp # GLSL shaders sources as header-only file
+│ └── window.hpp # Window class declaration
 ├── resources/
 │ ├── gol.rc.in # Application metadata
 │ └── gol.ico # Icon .ico format
@@ -127,7 +177,7 @@ A i7-6700HQ GTX960M laptop runs a 2000x2000 grid at ~950 fps on this dev branch,
 - Save/Load grid from .bin or/and .png
 - Zoom/Dezoom on the grid (Wheel for zoom/dezoom, mouse to move)
 - Grid editor
-- Command line interface (Lua)
+- Command line interface (Lua) -> **WIP**
 - Generalized rules for Moore neighborhood
 
 ## References
