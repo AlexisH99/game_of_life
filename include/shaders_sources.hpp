@@ -21,14 +21,19 @@ static constexpr const char* mainFrag = R"(
     uniform vec2 windowSize;
     uniform vec2 gridSize;
     uniform int words_per_row;
+    uniform float zoom;
+    uniform vec2 camera;
 
     out vec4 FragColor;
 
     void main() {
         vec2 frag = gl_FragCoord.xy - vec2(0.5);
 
-        int gx = int(frag.x * (gridSize.x / windowSize.x));
-        int gy = int(frag.y * (gridSize.y / windowSize.y));
+        float gx_f = camera.x + frag.x * (gridSize.x / windowSize.x) / zoom;
+        float gy_f = camera.y + frag.y * (gridSize.y / windowSize.y) / zoom;
+
+        int gx = int(gx_f);
+        int gy = int(gy_f);
 
         if (gx < 0 || gx >= int(gridSize.x) || gy < 0 || gy >= int(gridSize.y))
             discard;

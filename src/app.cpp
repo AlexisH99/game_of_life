@@ -1,6 +1,7 @@
 #include "app.hpp"
 #include "GLFW/glfw3.h"
 
+#include <algorithm>
 #include <windows.h>
 #include <iostream>
 #include <cstdlib>
@@ -116,6 +117,73 @@ void Application::char_callback(GLFWwindow* window, unsigned int codepoint){
     app->console->handleChar(codepoint);
 }
 
+void Application::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    if (!app || !app->renderer) return;
+
+    Renderer* r = app->renderer.get();
+    Config* c = app->cfg.get();
+
+    double mouseX, mouseY;
+    glfwGetCursorPos(window, &mouseX, &mouseY);
+
+    mouseY = c->height - mouseY;
+
+    float gridX_before = r->camX + (mouseX / c->width)  * (c->gridx / r->zoom);
+    float gridY_before = r->camY + (mouseY / c->height) * (c->gridy / r->zoom);
+
+    float prevZoom = r->zoom;
+    r->zoom *= pow(r->zoomSpeed, yoffset);
+
+    float maxZoom = 100.0f * std::max(
+        (float)c->gridx / (float)c->width,
+        (float)c->gridy / (float)c->height
+    );
+    r->zoom = std::clamp(r->zoom, r->minZoom, maxZoom);
+
+    float gridX_after = r->camX + (mouseX / c->width)  * (c->gridx / r->zoom);
+    float gridY_after = r->camY + (mouseY / c->height) * (c->gridy / r->zoom);
+
+    r->camX += (gridX_before - gridX_after);
+    r->camY += (gridY_before - gridY_after);
+
+    float visibleWidth  = c->gridx / r->zoom;
+    float visibleHeight = c->gridy / r->zoom;
+
+    r->camX = std::clamp(r->camX, 0.0f, c->gridx - visibleWidth);
+    r->camY = std::clamp(r->camY, 0.0f, c->gridy - visibleHeight);
+}
+
+void Application::cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+    static double lastX = xpos, lastY = ypos;
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    if (!app || !app->renderer) return;
+
+    Renderer* r = app->renderer.get();
+    Config* c = app->cfg.get();
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        double dx = xpos - lastX;
+        double dy = ypos - lastY;
+
+        float cellPerPixelX = (c->gridx / r->zoom) / c->width;
+        float cellPerPixelY = (c->gridy / r->zoom) / c->height;
+
+        r->camX -= dx * cellPerPixelX;
+        r->camY += dy * cellPerPixelY;
+
+        float visibleWidth  = c->gridx / r->zoom;
+        float visibleHeight = c->gridy / r->zoom;
+
+        r->camX = std::clamp(r->camX, 0.0f, c->gridx - visibleWidth);
+        r->camY = std::clamp(r->camY, 0.0f, c->gridy - visibleHeight);
+    }
+
+    lastX = xpos;
+    lastY = ypos;
+}
+
+
 void Application::loadConfig() {
     cfg = std::make_unique<Config>();
     cfg->initConfig("config.jsonc");
@@ -135,6 +203,8 @@ int Application::initWindow() {
     
     glfwSetKeyCallback(window->get(), key_callback);
     glfwSetCharCallback(window->get(), char_callback);
+    glfwSetScrollCallback(window->get(), scroll_callback);
+    glfwSetCursorPosCallback(window->get(), cursor_position_callback);
     
     if (cfg->vsync || (cfg->freeze_at_start && !cfg->vsync)) {
         glfwSwapInterval(1);

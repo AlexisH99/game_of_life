@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 #include "shaders_sources.hpp"
+#include <iostream>
 
 
 Renderer::Renderer(const Grid* grid, const Config* cfg) {
@@ -61,6 +62,8 @@ void Renderer::render() {
     glUniform2f(glGetUniformLocation(shaders->get(), "windowSize"), cfg->width, cfg->height);
     glUniform2f(glGetUniformLocation(shaders->get(), "gridSize"), cfg->gridx, cfg->gridy);
     glUniform1i(glGetUniformLocation(shaders->get(), "words_per_row"), grid->words_per_row);
+    glUniform1f(glGetUniformLocation(shaders->get(), "zoom"), zoom);
+    glUniform2f(glGetUniformLocation(shaders->get(), "camera"), camX, camY);
     vao->bind();
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }

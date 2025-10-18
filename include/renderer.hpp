@@ -13,6 +13,13 @@ class Renderer {
         void reset();
         void render();
 
+        float zoom = 1.0f;
+        float camX = 0.0f;   // coin haut-gauche visible (en cellules)
+        float camY = 0.0f;
+        float zoomSpeed = 1.05f;  // sensibilité de la molette
+        float minZoom = 1.0f;
+        float maxZoom = 100.0f;
+
     private:
         int words_per_row, rows;
         const uint32_t* grid_data;

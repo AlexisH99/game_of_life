@@ -20,6 +20,8 @@ class Application {
         static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
         static void char_callback(GLFWwindow* window, unsigned int codepoint);
         static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+        static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+        static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 
     private:
         void set_window_icon_from_resource(GLFWwindow* window);

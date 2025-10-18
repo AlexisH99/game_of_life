@@ -281,23 +281,24 @@ void Console::command_step(int n_step, float delay) {
     double remain_time = 0.0;
 
     if (!cfg->vsync) glfwSwapInterval(0);
-    for (int i = 0; i < n_step; ++i) {
+    for (int i = 0; i < n_step;) {
         if (abortRequested) {
             log(std::format("Aborted. {} steps done.", i));
             break;
         }
         
-        grid->step();
+        remain_time = delay - (glfwGetTime() - lastTime);
+        if (remain_time < 0) {
+            grid->step();
+            ++i;
+            lastTime = glfwGetTime();
+        }
+        
         renderer->render();
         draw(win->get());
         glfwSwapBuffers(win->get());
         glfwPollEvents();
-
-        remain_time = delay - (glfwGetTime() - lastTime);
-        if (remain_time > 0) std::this_thread::sleep_for(std::chrono::duration<double>(remain_time));
-        lastTime = glfwGetTime();
     }
-    
     if (!abortRequested) log(std::format("{} steps done.", n_step));
 
     glfwSwapInterval(1);
