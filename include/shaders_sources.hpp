@@ -27,10 +27,8 @@ static constexpr const char* mainFrag = R"(
     out vec4 FragColor;
 
     void main() {
-        vec2 frag = gl_FragCoord.xy - vec2(0.5);
-
-        float gx_f = camera.x + frag.x * (gridSize.x / windowSize.x) / zoom;
-        float gy_f = camera.y + frag.y * (gridSize.y / windowSize.y) / zoom;
+        float gx_f = camera.x + (gl_FragCoord.x - 0.5) * (gridSize.x / windowSize.x) / zoom;
+        float gy_f = gridSize.y - (camera.y + (gl_FragCoord.y + 0.5) * (gridSize.y / windowSize.y) / zoom);
 
         int gx = int(gx_f);
         int gy = int(gy_f);

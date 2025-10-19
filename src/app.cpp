@@ -117,7 +117,7 @@ void Application::char_callback(GLFWwindow* window, unsigned int codepoint){
     app->console->handleChar(codepoint);
 }
 
-void Application::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+void Application::scroll_callback(GLFWwindow* window, [[maybe_unused]]double xoffset, double yoffset) {
     Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
     if (!app || !app->renderer) return;
 
@@ -152,6 +152,9 @@ void Application::scroll_callback(GLFWwindow* window, double xoffset, double yof
 
     r->camX = std::clamp(r->camX, 0.0f, c->gridx - visibleWidth);
     r->camY = std::clamp(r->camY, 0.0f, c->gridy - visibleHeight);
+
+    std::cout << r->camX << " " << r->camY << "\n";
+    std::cout << "zoom " << r->zoom << "\n";
 }
 
 void Application::cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -177,6 +180,8 @@ void Application::cursor_position_callback(GLFWwindow* window, double xpos, doub
 
         r->camX = std::clamp(r->camX, 0.0f, c->gridx - visibleWidth);
         r->camY = std::clamp(r->camY, 0.0f, c->gridy - visibleHeight);
+
+        std::cout << r->camX << " " << r->camY << "\n";
     }
 
     lastX = xpos;
