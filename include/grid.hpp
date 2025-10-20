@@ -17,6 +17,7 @@ class Grid {
         ~Grid();
 
         void initSize();
+        void initRuleset();
         void initMask();
 
         void initCheckerGrid();
@@ -47,4 +48,8 @@ class Grid {
         std::vector<uint64_t> mask;
         std::vector<uint64_t> current;
         std::vector<uint64_t> next;
+        std::vector<uint64_t> count;
+
+        uint16_t born_rule = 0b0000000000001000;
+        uint16_t survive_rule = 0b0000000000001100;
 };

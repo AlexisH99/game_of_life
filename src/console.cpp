@@ -156,6 +156,16 @@ void Console::execute(const std::string& command) {
             return;
         }
 
+        if (sub == "ruleSet") {
+            if (tokens.size() != 3) {
+                log("Usage: set ruleSet <str>");
+                return;
+            }
+
+            setRuleset(tokens[2]);
+            return;
+        }
+
         log("Unknown parameter: " + sub);
         return;
     }
@@ -320,6 +330,19 @@ void Console::setGridSize(int x, int y) {
     grid->initRandomGrid();
     renderer->reset();
     renderer->render();
+}
+
+void Console::setRuleset(std::string rulestr) {
+    cfg->rulestr = rulestr;
+    auto [ok, logstr] = cfg->parseRuleset(cfg->rulestr);
+    if (!ok) {
+        log(logstr);
+        auto [ok, logstr] = cfg->parseRuleset("B3S23");
+        log(logstr);
+    } else {
+        log(logstr);
+    }
+    grid->initRuleset();
 }
 
 void Console::getWindowSize() {

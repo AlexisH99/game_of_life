@@ -3,8 +3,10 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <cctype>
 #include <fstream>
 #include <filesystem>
+#include <bitset>
 
 Config::Config() {
     
@@ -27,6 +29,16 @@ void Config::initConfig(const std::string& p) {
             std::cerr << "Error reading config: " << e.what() << std::endl;
         }
     }
+
+    auto [ok, log] = parseRuleset(rulestr);
+    if (!ok) {
+        std::cout << log << "\n";
+        auto [ok, log] = parseRuleset("B3S23");
+        std::cout << log << "\n";
+    } else {
+        std::cout << log << "\n";
+    }
+    std::cout << std::bitset<9>(born_rule) << " " << std::bitset<9>(survive_rule) << "\n";
 }
 
 void Config::saveConfig(const std::string& path) {
@@ -46,6 +58,9 @@ void Config::saveConfig(const std::string& path) {
         {"window", {
             {"width", width},
             {"height", height}
+        }},
+        {"game", {
+            {"rulset", rulestr}
         }}
     };
 
@@ -104,7 +119,73 @@ void Config::loadConfig(const std::string& path) {
         if (disp.contains("freeze_at_start"))  freeze_at_start = disp["freeze_at_start"];
     }
 
+    if (j.contains("game")) {
+        auto& game = j["game"];
+        if (game.contains("ruleset"))  rulestr = game["ruleset"];
+    }
+
     std::cout << "Configuration loaded successfully.\n";
+}
+
+std::pair<bool, std::string> Config::parseRuleset(std::string rawrulestr) {
+    std::string rulestr;
+    std::string errlog;
+    born_rule = 0;
+    survive_rule = 0;
+    for (char c : rawrulestr) {
+        if (c != '/' || c != ' ') rulestr.push_back(std::toupper(static_cast<unsigned char>(c)));
+    }
+
+    bool in_born = false, in_survive = false;
+    bool has_b = false, has_s = false;
+
+    for (int i = 0; i < (int)rulestr.size(); ++i) {
+        char c = rulestr[i];
+
+        if (c == 'B') {
+            if (has_b) {
+                errlog = "[Ruleset Error] multiple 'B' in " + rawrulestr + ". Fallback to default (B3S23).\n";
+                return {false, errlog};
+            }
+            in_born = true; in_survive = false; has_b = true;
+            continue;
+        }
+
+        if (c == 'S') {
+            if (has_s) {
+                errlog = "[Ruleset Error] multiple 'B' in " + rawrulestr + ". Fallback to default (B3S23).\n";
+                return {false, errlog};
+            }
+            in_born = false; in_survive = true; has_s = true;
+            continue;
+        }
+
+        if (std::isdigit(static_cast<unsigned char>(c))) {
+            int n = c - '0';
+            if (n < 0 || n > 8) {
+                errlog = "[Ruleset Error] out of range value (" + std::to_string(n) + ") in " + rawrulestr + ". Fallback to default (B3S23).\n";
+                return {false, errlog};
+            }
+            if (in_born) born_rule |= (1 << n);
+            else if (in_survive) survive_rule |= (1 << n);
+            else {
+                errlog = "[Ruleset Error] out of range value (" + std::to_string(n) + ") in " + rawrulestr + ". Fallback to default (B3S23).\n";
+                return {false, errlog};
+            }
+        } else {
+            errlog = "[Ruleset Error] Invalid '" + std::to_string(c) + "' in " + rawrulestr + ". Fallback to default (B3S23).\n";
+            return {false, errlog};
+        }
+    }
+
+    if (!has_b || !has_s) {
+        std::cerr << "[Ruleset Error] Missing B and/or S in " + rawrulestr + ". Fallback to default (B3S23)..\n";
+        return {false, errlog};
+    }
+
+    errlog = "Loaded ruleset: " + rulestr;
+
+    return {true, errlog};
 }
 
 void Config::printJsonRecursive(const json& j, int indent, const std::string& prefix) const {

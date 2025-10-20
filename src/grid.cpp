@@ -23,6 +23,13 @@ void Grid::initSize() {
     mask.assign(rows * words_per_row, 0ULL);
     current.assign(rows * words_per_row, 0ULL);
     next.assign(rows * words_per_row, 0ULL);
+
+    count.resize(9);
+}
+
+void Grid::initRuleset() {
+    born_rule = cfg->born_rule;
+    survive_rule = cfg->survive_rule;
 }
 
 void Grid::initMask() {
@@ -78,11 +85,6 @@ void Grid::step() {
             uint64_t* out = &next[r*words_per_row];
 
             for (int w = 0; w < words_per_row; ++w) {
-                uint64_t s0 = 0, s1 = 0, s2 = 0, s3 = 0;
-                uint64_t c1 = 0, c2 = 0;
-                uint64_t is2 = 0;
-                uint64_t is3 = 0;
-
                 uint64_t top_left  = (top[w] << 1) | (w>0 ? top[w-1] >> 63 : 0);
                 uint64_t top_mid   = top[w];
                 uint64_t top_right = (top[w] >> 1) | (w<words_per_row-1 ? top[w+1] << 63 : 0);
@@ -95,6 +97,9 @@ void Grid::step() {
                 uint64_t bot_right = (bot[w] >> 1) | (w<words_per_row-1 ? bot[w+1] << 63 : 0);
 
                 // bitwise addition
+                
+                uint64_t s0 = 0, s1 = 0, s2 = 0, s3 = 0;
+                uint64_t c1 = 0, c2 = 0;
 
                 c1 = s0 & top_left; s0 ^= top_left; c2 = s1 & c1; s1 ^= c1; s3 ^= s2 & c2; s2 ^= c2;
                 c1 = s0 & top_mid;  s0 ^= top_mid;  c2 = s1 & c1; s1 ^= c1; s3 ^= s2 & c2; s2 ^= c2;
@@ -105,10 +110,34 @@ void Grid::step() {
                 c1 = s0 & bot_mid; s0 ^= bot_mid; c2 = s1 & c1; s1 ^= c1; s3 ^= s2 & c2; s2 ^= c2;
                 c1 = s0 & bot_right; s0 ^= bot_right; c2 = s1 & c1; s1 ^= c1; s3 ^= s2 & c2; s2 ^= c2;
 
-                is2 = (~s3) & (~s2) & s1 & ~s0;
-                is3 = (~s3) & (~s2) & s1 &  s0;
+                // uint64_t is0 = 0;
+                // uint64_t is1 = 0;
+                // uint64_t is2 = 0;
+                // uint64_t is3 = 0;
+                // uint64_t is4 = 0;
+                // uint64_t is5 = 0;
+                // uint64_t is6 = 0;
+                // uint64_t is7 = 0;
+                // uint64_t is8 = 0;
 
-                out[w] = (is3 | (mid[w] & is2)) & row_mask[w];
+                count[0] = ~s3 & ~s2 & ~s1 & ~s0;
+                count[1] = ~s3 & ~s2 & ~s1 & s0;
+                count[2] = ~s3 & ~s2 & s1 & ~s0;
+                count[3] = ~s3 & ~s2 & s1 & s0;
+                count[4] = ~s3 & s2 & ~s1 & ~s0;
+                count[5] = ~s3 & s2 & ~s1 & s0;
+                count[6] = ~s3 & s2 & s1 & ~s0;
+                count[7] = ~s3 & s2 & s1 & s0;
+                count[8] = s3 & ~s2 & ~s1 & ~s0;
+
+                uint64_t born = 0ULL, survive = 0ULL;
+
+                for (int i = 0; i < 9; ++i) {
+                    if (born_rule & (1U << i)) born |= count[i];
+                    if (survive_rule & (1U << i)) survive |= count[i];
+                }
+
+                out[w] = (born | (mid[w] & survive)) & row_mask[w];
             }
         }
     }

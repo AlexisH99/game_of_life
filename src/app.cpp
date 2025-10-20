@@ -245,6 +245,7 @@ void Application::initGrid() {
     grid = std::make_unique<Grid>();
     grid->cfg = cfg.get();
     grid->pause = cfg->freeze_at_start;
+    grid->initRuleset();
     grid->initSize();
     grid->initMask();
     if (cfg->checker == true) {

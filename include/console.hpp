@@ -38,6 +38,7 @@ class Console {
         void command_step(int n_step = 1, float delay = 0.0);
         void setWindowSize(int w, int h);
         void setGridSize(int x, int y);
+        void setRuleset(std::string rulestr);
         void getWindowSize();
         void getGridSize();
 
