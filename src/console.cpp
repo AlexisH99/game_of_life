@@ -26,6 +26,14 @@ void Console::init() {
     vao = std::make_unique<GLVertexBuffer>();
     vbo = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);
     shaders = std::make_unique<GLProgram>(consoleVert, consoleFrag);
+
+    log("Available commands:");
+    log("  start / stop / regen");
+    log("  step <n_steps> <delay>");
+    log("  get <globalProperty>");
+    log("  set <globalProperty> [values]");
+    log("Available globalProperties:");
+    log("  windowSize | gridSize | ruleSet | seed | dist");
 }
 
 template<typename T>
