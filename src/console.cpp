@@ -40,7 +40,7 @@ std::optional<T> Console::from_string(const std::string& s) {
 
 void Console::log(const std::string& s) {
     lines.push_back(s);
-    if (lines.size() > 100) lines.erase(lines.begin());
+    if (lines.size() > 1000) lines.erase(lines.begin());
 }
 
 void Console::execute(const std::string& command) {
@@ -261,11 +261,12 @@ void Console::draw(GLFWwindow* window) {
     // === texte vert ===
     pts.clear();
     int lineHeight = 10;
-    int maxVisibleLines = (int)(cHeight / lineHeight) - 3;
+    maxVisibleLines = (int)(cHeight / lineHeight) - 3;
     if (maxVisibleLines < 1) maxVisibleLines = 1;
 
     int y = 10;
-    for (int i = std::max(0, (int)lines.size() - maxVisibleLines); i < (int)lines.size(); i++) {
+    int end = std::min((int)lines.size(), lineOffset + maxVisibleLines);
+    for (int i = lineOffset; i < end; i++) {
         appendText(pts, 10, y, lines[i]);
         y += lineHeight;
     }
@@ -284,6 +285,7 @@ void Console::handleInput([[maybe_unused]]GLFWwindow* win, int key, int action) 
         if (key == GLFW_KEY_ENTER) {
             execute(input);
             input.clear();
+            lineOffset = std::max(0, (int)lines.size() - maxVisibleLines);
         } else if (key == GLFW_KEY_BACKSPACE && !input.empty()) {
             input.pop_back();
         }

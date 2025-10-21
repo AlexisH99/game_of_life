@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <deque>
 
 class Console {
     public:
@@ -27,6 +28,11 @@ class Console {
 
         bool visible = false;
         bool abortRequested = false;
+        float cWidth, cHeight;
+        double scrollAccumulator = 0.0f;
+        int lineOffset = 0;
+        int maxVisibleLines;
+        std::deque<std::string> lines;
 
     private:
         template<typename T>
@@ -44,7 +50,6 @@ class Console {
         void getWindowSize();
         void getGridSize();
 
-        std::vector<std::string> lines;
         std::string input;
         std::vector<float> pts;
         unsigned int VAO = 0, VBO = 0;
@@ -52,7 +57,6 @@ class Console {
         std::unique_ptr<GLBuffer> vbo;
         std::unique_ptr<GLProgram> shaders;
         int fbWidth, fbHeight;
-        float cWidth, cHeight;
 
         Config* cfg;
         Window* win;

@@ -123,10 +123,13 @@ void Application::scroll_callback(GLFWwindow* window, [[maybe_unused]]double xof
 
     Renderer* r = app->renderer.get();
     Config* c = app->cfg.get();
+    Console* cons = app->console.get();
+
 
     double mouseX, mouseY;
     glfwGetCursorPos(window, &mouseX, &mouseY);
 
+    if (!cons->visible || mouseY > cons->cHeight) {
     mouseY = c->height - mouseY;
 
     float gridX_before = r->camX + (mouseX / c->width)  * (c->gridx / r->zoom);
@@ -152,9 +155,20 @@ void Application::scroll_callback(GLFWwindow* window, [[maybe_unused]]double xof
 
     r->camX = std::clamp(r->camX, 0.0f, c->gridx - visibleWidth);
     r->camY = std::clamp(r->camY, 0.0f, c->gridy - visibleHeight);
-
-    std::cout << r->camX << " " << r->camY << "\n";
-    std::cout << "zoom " << r->zoom << "\n";
+    } else {
+        cons->scrollAccumulator += yoffset;
+        const double threshold = 1.0f;
+        while (cons->scrollAccumulator >= threshold) {
+            cons->lineOffset -= 1;
+            cons->scrollAccumulator -= threshold;
+        }
+        while (cons->scrollAccumulator <= threshold) {
+            cons->lineOffset += 1;
+            cons->scrollAccumulator += threshold;
+        }
+        int maxScroll = std::max(0, (int)cons->lines.size() - cons->maxVisibleLines);
+        cons->lineOffset = std::clamp(cons->lineOffset, 0, maxScroll);
+    }
 }
 
 void Application::cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
