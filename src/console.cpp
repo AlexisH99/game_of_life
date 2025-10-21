@@ -86,9 +86,12 @@ void Console::execute(const std::string& command) {
 
         { "help", [&](const auto&) {
             log("Available commands:");
-            log("  start / stop / regen / step");
-            log("  get <windowSize|gridSize>");
-            log("  set <windowSize|gridSize> <values>");
+            log("  start / stop / regen");
+            log("  step <n_steps> <delay>");
+            log("  get <globalProperty>");
+            log("  set <globalProperty> [values]");
+            log("Available globalProperties:");
+            log("  windowSize | gridSize | ruleSet | seed | dist");
         }},
     };
 
