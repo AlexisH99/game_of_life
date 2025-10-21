@@ -10,6 +10,7 @@
 #include <charconv>
 #include <functional>
 #include <iostream>
+#include <algorithm>
 
 Console::Console(Config* cfg, Window* win, Grid* grid, Renderer* renderer)
     : cfg(cfg), win(win), grid(grid), renderer(renderer)
@@ -44,6 +45,9 @@ void Console::log(const std::string& s) {
 }
 
 void Console::execute(const std::string& command) {
+    commandIndex = 0;
+    commandHistory.push_front(command);
+    if (commandHistory.size() > 100) commandHistory.erase(commandHistory.begin());
     log("> " + command);
 
     // === 1. Tokenize ===
@@ -288,6 +292,21 @@ void Console::handleInput([[maybe_unused]]GLFWwindow* win, int key, int action) 
             lineOffset = std::max(0, (int)lines.size() - maxVisibleLines);
         } else if (key == GLFW_KEY_BACKSPACE && !input.empty()) {
             input.pop_back();
+        } else if (key == GLFW_KEY_UP) {
+            commandIndex += 1;
+            commandIndex = std::clamp(commandIndex, 0, (int)commandHistory.size());
+            if (commandHistory.size() == 0) return;
+            input.clear();
+            input = commandHistory[commandIndex-1];
+        } else if (key == GLFW_KEY_DOWN) {
+            commandIndex -= 1;
+            commandIndex = std::clamp(commandIndex, 0, (int)commandHistory.size());
+            if (commandHistory.size() == 0 || commandIndex == 0) {
+                input.clear();
+                return;
+            };
+            input.clear();
+            input = commandHistory[commandIndex-1];
         }
         if (key == GLFW_KEY_C && (glfwGetKey(win, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
                           glfwGetKey(win, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)) {

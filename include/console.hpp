@@ -26,6 +26,8 @@ class Console {
         void handleChar(unsigned int codepoint);
         void cleanup();
 
+        int commandIndex;
+        std::deque<std::string> commandHistory;
         bool visible = false;
         bool abortRequested = false;
         float cWidth, cHeight;
