@@ -16,6 +16,7 @@ class Grid {
         Grid();
         ~Grid();
 
+        void initSeed();
         void initSize();
         void initRuleset();
         void initMask();
@@ -23,10 +24,7 @@ class Grid {
         void initCheckerGrid();
         void initRandomGrid();
 
-        void reset();
         void step();
-        void start();
-        void stop();
         
         void printMask();
         void printCurrent();
@@ -39,17 +37,20 @@ class Grid {
         int rows;
         int words_per_row;
         int blocksize;
+        int gridSeed;
         bool pause = true;
 
         Config* cfg = nullptr;
     private:
         std::mt19937 rng;
-        std::uniform_int_distribution<uint64_t> dist;
+        std::uniform_int_distribution<uint64_t> uniform_dist;
+        std::bernoulli_distribution bernoulli_dist;
+
         std::vector<uint64_t> mask;
         std::vector<uint64_t> current;
         std::vector<uint64_t> next;
         std::vector<uint64_t> count;
 
-        uint16_t born_rule = 0b0000000000001000;
-        uint16_t survive_rule = 0b0000000000001100;
+        uint16_t born_rule = 0b0000000000000000;
+        uint16_t survive_rule = 0b0000000000000000;
 };

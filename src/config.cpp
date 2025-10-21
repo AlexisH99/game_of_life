@@ -30,15 +30,19 @@ void Config::initConfig(const std::string& p) {
         }
     }
 
-    auto [ok, log] = parseRuleset(rulestr);
+    {auto [ok, msg] = parseRuleset(rulestr);
     if (!ok) {
-        std::cout << log << "\n";
-        auto [ok, log] = parseRuleset("B3S23");
-        std::cout << log << "\n";
-    } else {
-        std::cout << log << "\n";
+        std::cout << msg << "\n";
+        auto [ok, msg] = parseRuleset("B3S23");
     }
-    std::cout << std::bitset<9>(born_rule) << " " << std::bitset<9>(survive_rule) << "\n";
+    std::cout << msg << "\n";}
+
+    {auto [ok,msg] = parseDistType(distType);
+    if (!ok) {
+        std::cout << msg << "\n";
+        auto [ok, msg] = parseDistType("uniform");
+    }
+    std::cout << msg << "\n";}
 }
 
 void Config::saveConfig(const std::string& path) {
@@ -60,7 +64,11 @@ void Config::saveConfig(const std::string& path) {
             {"height", height}
         }},
         {"game", {
-            {"rulset", rulestr}
+            {"rulset", rulestr},
+            {"random_seed", randomSeed},
+            {"seed", seed},
+            {"dist_type", distType},
+            {"density", density}
         }}
     };
 
@@ -122,6 +130,10 @@ void Config::loadConfig(const std::string& path) {
     if (j.contains("game")) {
         auto& game = j["game"];
         if (game.contains("ruleset"))  rulestr = game["ruleset"];
+        if (game.contains("random_seed"))  randomSeed = game["random_seed"];
+        if (game.contains("seed"))  seed = game["seed"];
+        if (game.contains("dist_type"))  distType = game["dist_type"];
+        if (game.contains("density"))  density = game["density"];
     }
 
     std::cout << "Configuration loaded successfully.\n";
@@ -186,6 +198,15 @@ std::pair<bool, std::string> Config::parseRuleset(std::string rawrulestr) {
     errlog = "Loaded ruleset: " + rulestr;
 
     return {true, errlog};
+}
+
+std::pair<bool, std::string> Config::parseDistType(std::string disttyp) {
+    if (disttyp == "uniform" || disttyp == "bernoulli") {
+        distType = disttyp;
+        return {true, "Selected distribution type: " + disttyp};
+    } else {
+        return {false, "[Dist type Error] Wrong distribution type: " + disttyp + ". Falling back to uniform"};
+    }
 }
 
 void Config::printJsonRecursive(const json& j, int indent, const std::string& prefix) const {

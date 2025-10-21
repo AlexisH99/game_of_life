@@ -18,6 +18,10 @@ class Config {
         int gridy = 500;
         std::string rulestr = "B3S23";
         uint16_t born_rule = 0, survive_rule = 0;
+        bool randomSeed = false;
+        int seed = 1234;
+        std::string distType = "uniform";
+        float density = 0.5f;
         bool checker = false;
         bool showfps = true;
         bool vsync = false;
@@ -25,6 +29,7 @@ class Config {
         
         void initConfig(const std::string& path);
         std::pair<bool, std::string> parseRuleset(std::string rawrulestr);
+        std::pair<bool, std::string> parseDistType(std::string disttyp);
         void printAllParams() const;
 
         GLFWwindow* window = nullptr;

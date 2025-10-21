@@ -3,12 +3,22 @@
 #include <iostream>
 #include <cstdlib>
 
-Grid::Grid() : rng(std::random_device{}()), dist(0, ~0ULL) {
+Grid::Grid() : rng(std::random_device{}()), uniform_dist(0, ~0ULL), bernoulli_dist(0.5) {
 
 }
 
 Grid::~Grid() {
 
+}
+
+void Grid::initSeed() {
+    if (cfg->randomSeed) {
+        gridSeed = std::random_device{}();
+        rng.seed(gridSeed);
+    } else {
+        gridSeed = cfg->seed;
+        rng.seed(gridSeed);
+    }
 }
 
 void Grid::initSize() {
@@ -65,12 +75,24 @@ void Grid::initCheckerGrid() {
 }
 
 void Grid::initRandomGrid() {
-    std::vector<uint64_t> random_buffer(current.size());
-    for (auto &val : random_buffer)
-        val = dist(rng);
-
-    for (size_t i = 0; i < current.size(); ++i) {
-        current[i] = random_buffer[i] & mask[i];
+    if (cfg->distType == "uniform") {
+        std::cout << "debug: uniform\n";
+        for (size_t i = 0; i < current.size(); ++i) {
+            current[i] = uniform_dist(rng) & mask[i];
+        }
+    } else if (cfg->distType == "bernoulli") {
+        std::cout << "debug: bernoulli\n";
+        bernoulli_dist = std::bernoulli_distribution(cfg->density);
+        uint64_t word = 0ULL;
+        for (size_t i = 0; i < current.size(); ++i) {
+            word = 0ULL;
+            for (int bit = 0; bit < 64; ++bit) {
+                if (bernoulli_dist(rng)) word |= (1ULL << bit);
+            }
+            current[i] = word & mask[i];
+        }
+    } else {
+        throw std::runtime_error("[Fatal] Bad type error: " + cfg->distType);
     }
 }
 
@@ -142,24 +164,6 @@ void Grid::step() {
         }
     }
     std::swap(current, next);
-}
-
-void Grid::reset() {
-    initRandomGrid();
-}
-
-void Grid::start() {
-    pause = false;
-    if (cfg->vsync) {
-        glfwSwapInterval(1);
-    } else {
-        glfwSwapInterval(0);
-    }
-}
-
-void Grid::stop() {
-    pause = true;
-    glfwSwapInterval(1);
 }
 
 std::vector<uint64_t> Grid::getGrid() {

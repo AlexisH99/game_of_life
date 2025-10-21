@@ -39,6 +39,8 @@ class Console {
         void setWindowSize(int w, int h);
         void setGridSize(int x, int y);
         void setRuleset(std::string rulestr);
+        void setSeed(bool isRandom = true, int seed = 0);
+        void setDistrib(std::string distType = "uniform", float density = 0.5);
         void getWindowSize();
         void getGridSize();
 

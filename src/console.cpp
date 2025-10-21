@@ -9,6 +9,7 @@
 #include <sstream>
 #include <charconv>
 #include <functional>
+#include <iostream>
 
 Console::Console(Config* cfg, Window* win, Grid* grid, Renderer* renderer)
     : cfg(cfg), win(win), grid(grid), renderer(renderer)
@@ -59,7 +60,14 @@ void Console::execute(const std::string& command) {
     static const std::unordered_map<std::string, std::function<void(const std::vector<std::string>&)>> baseCommands = {
         { "start", [&](const auto&) { command_start(); } },
         { "stop",  [&](const auto&) { command_stop(); } },
-        { "regen", [&](const auto&) { command_regen(); } },
+        { "regen", [&](const auto&) {
+            command_regen();
+            if (cfg->randomSeed) {
+                log("Set seed to: " + std::to_string(grid->gridSeed));
+            } else {
+                log("Seed: " + std::to_string(grid->gridSeed));
+            }
+        } },
 
         { "step", [&](const auto& args) {
             if (args.size() == 1) {
@@ -161,8 +169,45 @@ void Console::execute(const std::string& command) {
                 log("Usage: set ruleSet <str>");
                 return;
             }
-
             setRuleset(tokens[2]);
+            return;
+        }
+
+        if (sub == "seed") {
+            if (tokens.size() != 3) {
+                log("Usage: set ruleSet <str>/<int>");
+                return;
+            }
+            auto seed = from_string<int>(tokens[2]);
+            if (!seed) {
+                if (tokens[2] == "rnd") {
+                    setSeed(true, 0);
+                    log("Random seed");
+                } else {
+                    log("Error: invalid argument '" + tokens[2] + "'");
+                    log("Usage: set ruleSet <str>/<int>");
+                }
+            } else {
+                setSeed(false, *seed);
+                log("Set seed to: " + std::to_string(grid->gridSeed));
+            }
+            return;
+        }
+
+        if (sub == "dist") {
+            if (tokens.size() != 3 && tokens.size() != 4) {
+                log("Usage: set ruleSet <str> <float>");
+                return;
+            }
+            auto distType = tokens[2];
+            auto [ok, msg] = cfg->parseDistType(distType);
+            if (tokens.size() == 3) {
+                setDistrib(distType);
+            }
+            if (tokens.size() == 4) {
+                auto density = from_string<float>(tokens[3]);
+                setDistrib(distType, *density);
+            }
             return;
         }
 
@@ -281,6 +326,7 @@ void Console::command_stop() {
 }
 
 void Console::command_regen() {
+    grid->initSeed();
     grid->initRandomGrid();
 }
 
@@ -334,15 +380,36 @@ void Console::setGridSize(int x, int y) {
 
 void Console::setRuleset(std::string rulestr) {
     cfg->rulestr = rulestr;
-    auto [ok, logstr] = cfg->parseRuleset(cfg->rulestr);
+    auto [ok, msg] = cfg->parseRuleset(cfg->rulestr);
     if (!ok) {
-        log(logstr);
-        auto [ok, logstr] = cfg->parseRuleset("B3S23");
-        log(logstr);
-    } else {
-        log(logstr);
+        log(msg);
+        auto [ok, msg] = cfg->parseRuleset("B3S23");
     }
+    log(msg);
     grid->initRuleset();
+}
+
+void Console::setSeed(bool isRandom, int seed) {
+    if (isRandom) {
+        cfg->randomSeed = true;
+    } else {
+        cfg->randomSeed = false;
+        cfg->seed = seed;
+        grid->initSeed();
+    }
+    grid->initRandomGrid();
+}
+
+void Console::setDistrib(std::string distType, float density) {
+    cfg->distType = distType;
+    cfg->density = density;
+    auto [ok, msg] = cfg->parseDistType(cfg->distType);
+    if (!ok) {
+        log(msg);
+        auto [ok, msg] = cfg->parseDistType("uniform");
+    }
+    log(msg);
+    grid->initRandomGrid();
 }
 
 void Console::getWindowSize() {
