@@ -68,7 +68,6 @@ void Console::execute(const std::string& command) {
     if (tokens.empty()) return;
     const std::string& cmd = tokens[0];
 
-    // === 2. Commandes simples (start, stop, regen, step...) ===
     static const std::unordered_map<std::string, std::function<void(const std::vector<std::string>&)>> baseCommands = {
         { "start", [&](const auto&) { command_start(); } },
         { "stop",  [&](const auto&) { command_stop(); } },
@@ -107,7 +106,6 @@ void Console::execute(const std::string& command) {
         }},
     };
 
-    // === 3. Commande "get" ===
     if (cmd == "get") {
         if (tokens.size() != 2) {
             log("Usage: get <windowSize|gridSize>");
@@ -124,7 +122,6 @@ void Console::execute(const std::string& command) {
         return;
     }
 
-    // === 4. Commande "set" ===
     if (cmd == "set") {
         if (tokens.size() < 2) {
             log("Usage: set <windowSize|gridSize> <values>");
@@ -133,7 +130,6 @@ void Console::execute(const std::string& command) {
 
         const auto& sub = tokens[1];
 
-        // ---- set windowSize <int|.> <int|.> ----
         if (sub == "windowSize") {
             if (tokens.size() != 4) {
                 log("Usage: set windowSize <int|.> <int|.>");
@@ -159,7 +155,6 @@ void Console::execute(const std::string& command) {
             return;
         }
 
-        // ---- set gridSize <int> <int> ----
         if (sub == "gridSize") {
             if (tokens.size() != 4) {
                 log("Usage: set gridSize <int> <int>");
@@ -230,14 +225,12 @@ void Console::execute(const std::string& command) {
         return;
     }
 
-    // === 5. Commandes de base ===
     auto it = baseCommands.find(cmd);
     if (it != baseCommands.end()) {
         it->second(tokens);
         return;
     }
 
-    // === 6. Commande inconnue ===
     log("Unknown command: " + cmd);
     log("Type 'help' for available commands.");
 }
@@ -254,7 +247,6 @@ void Console::draw(GLFWwindow* window) {
     cWidth = (float)fbWidth;
     cHeight = (float)(0.3 * fbHeight);
 
-    // === fond semi-transparent ===
     float bgVerts[12] = {
         0, 0,  cWidth, 0,  cWidth, cHeight,
         0, 0,  cWidth, cHeight, 0, cHeight
@@ -270,7 +262,6 @@ void Console::draw(GLFWwindow* window) {
     glUniform4f(glGetUniformLocation(shaders->get(), "uColor"), 0.0f, 0.0f, 0.15f, 0.75f);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    // === texte vert ===
     pts.clear();
     int lineHeight = 10;
     maxVisibleLines = (int)(cHeight / lineHeight) - 3;

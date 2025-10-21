@@ -125,36 +125,35 @@ void Application::scroll_callback(GLFWwindow* window, [[maybe_unused]]double xof
     Config* c = app->cfg.get();
     Console* cons = app->console.get();
 
-
-    double mouseX, mouseY;
-    glfwGetCursorPos(window, &mouseX, &mouseY);
+        
+        double mouseX, mouseY;
+        glfwGetCursorPos(window, &mouseX, &mouseY);
 
     if (!cons->visible || mouseY > cons->cHeight) {
-    mouseY = c->height - mouseY;
+        mouseY = c->height - mouseY;
 
-    float gridX_before = r->camX + (mouseX / c->width)  * (c->gridx / r->zoom);
-    float gridY_before = r->camY + (mouseY / c->height) * (c->gridy / r->zoom);
+        float gridX_before = r->camX + (mouseX / c->width)  * (c->gridx / r->zoom);
+        float gridY_before = r->camY + (mouseY / c->height) * (c->gridy / r->zoom);
 
-    float prevZoom = r->zoom;
-    r->zoom *= pow(r->zoomSpeed, yoffset);
+        r->zoom *= pow(r->zoomSpeed, yoffset);
 
-    float maxZoom = 100.0f * std::max(
-        (float)c->gridx / (float)c->width,
-        (float)c->gridy / (float)c->height
-    );
-    r->zoom = std::clamp(r->zoom, r->minZoom, maxZoom);
+        float maxZoom = 100.0f * std::max(
+            (float)c->gridx / (float)c->width,
+            (float)c->gridy / (float)c->height
+        );
+        r->zoom = std::clamp(r->zoom, r->minZoom, maxZoom);
 
-    float gridX_after = r->camX + (mouseX / c->width)  * (c->gridx / r->zoom);
-    float gridY_after = r->camY + (mouseY / c->height) * (c->gridy / r->zoom);
+        float gridX_after = r->camX + (mouseX / c->width)  * (c->gridx / r->zoom);
+        float gridY_after = r->camY + (mouseY / c->height) * (c->gridy / r->zoom);
 
-    r->camX += (gridX_before - gridX_after);
-    r->camY += (gridY_before - gridY_after);
+        r->camX += (gridX_before - gridX_after);
+        r->camY += (gridY_before - gridY_after);
 
-    float visibleWidth  = c->gridx / r->zoom;
-    float visibleHeight = c->gridy / r->zoom;
+        float visibleWidth  = c->gridx / r->zoom;
+        float visibleHeight = c->gridy / r->zoom;
 
-    r->camX = std::clamp(r->camX, 0.0f, c->gridx - visibleWidth);
-    r->camY = std::clamp(r->camY, 0.0f, c->gridy - visibleHeight);
+        r->camX = std::clamp(r->camX, 0.0f, c->gridx - visibleWidth);
+        r->camY = std::clamp(r->camY, 0.0f, c->gridy - visibleHeight);
     } else {
         cons->scrollAccumulator += yoffset;
         const double threshold = 1.0f;

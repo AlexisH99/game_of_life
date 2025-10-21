@@ -41,29 +41,6 @@ class GLBuffer {
         GLenum target = 0;
 };
 
-class GLTexture {
-    public:
-        GLTexture(GLenum target);
-        ~GLTexture();
-
-        void bind(GLuint unit) const;
-        void set_parameters() const;
-        void allocate(GLint internalFormat, GLsizei width, GLsizei height,
-            GLenum format, GLenum type, const void* data) const;
-        void set_data(GLsizei width, GLsizei height,
-            GLenum format, GLenum type, const void* data);
-
-        GLTexture(const GLTexture&) = delete;
-        GLTexture& operator=(const GLTexture&) = delete;
-
-        GLTexture(GLTexture&& other) noexcept;
-        GLTexture& operator=(GLTexture&& other) noexcept;
-    
-    private:
-        GLuint id = 0;
-        GLenum target = 0;
-};
-
 class GLTextureBuffer {
 public:
     GLTextureBuffer();

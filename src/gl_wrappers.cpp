@@ -66,49 +66,6 @@ GLBuffer& GLBuffer::operator=(GLBuffer&& other) noexcept {
     return *this;
 }
 
-GLTexture::GLTexture([[maybe_unused]]GLenum tgt) 
-    : target(tgt)
-{
-    glGenTextures(1, &id);
-}
-
-GLTexture::~GLTexture() {
-    if (id) glDeleteTextures(1, &id);
-}
-
-void GLTexture::bind(GLuint unit = 0) const {
-    glActiveTexture(GL_TEXTURE0 + unit);
-    glBindTexture(target, id);
-}
-
-void GLTexture::set_parameters() const {
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-}
-
-void GLTexture::allocate(GLint internalFormat, GLsizei width, GLsizei height,
-    GLenum format, GLenum type, const void* data = nullptr) const {
-    glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
-}
-
-void GLTexture::set_data(GLsizei width, GLsizei height, GLenum format, GLenum type, const void* data = nullptr) {
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, data);
-}
-
-GLTexture::GLTexture(GLTexture&& other) noexcept
-    : id(other.id), target(other.target)
-{
-    other.id = 0;
-}
-
-GLTexture& GLTexture::operator=(GLTexture&& other) noexcept {
-    std::swap(id, other.id);
-    std::swap(target, other.target);
-    return *this;
-}
-
 GLTextureBuffer::GLTextureBuffer() {
     glGenTextures(1, &texID);
     glGenBuffers(1, &bufID);

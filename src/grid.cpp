@@ -132,16 +132,6 @@ void Grid::step() {
                 c1 = s0 & bot_mid; s0 ^= bot_mid; c2 = s1 & c1; s1 ^= c1; s3 ^= s2 & c2; s2 ^= c2;
                 c1 = s0 & bot_right; s0 ^= bot_right; c2 = s1 & c1; s1 ^= c1; s3 ^= s2 & c2; s2 ^= c2;
 
-                // uint64_t is0 = 0;
-                // uint64_t is1 = 0;
-                // uint64_t is2 = 0;
-                // uint64_t is3 = 0;
-                // uint64_t is4 = 0;
-                // uint64_t is5 = 0;
-                // uint64_t is6 = 0;
-                // uint64_t is7 = 0;
-                // uint64_t is8 = 0;
-
                 count[0] = ~s3 & ~s2 & ~s1 & ~s0;
                 count[1] = ~s3 & ~s2 & ~s1 & s0;
                 count[2] = ~s3 & ~s2 & s1 & ~s0;
