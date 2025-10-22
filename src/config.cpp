@@ -276,6 +276,6 @@ void Config::printAllParams() const {
     std::cout << "step <n_steps> <delay>    : do n_steps simulation steps with delay in seconds\n";
     std::cout << "regen                     : regenerate random grid\n";
     std::cout << "set <width> <height>      : set global property (windowSize, gridSize)\n";
-    std::cout << "get <globalProperty>      : print current global property (windowSize, gridSize)\n";
+    std::cout << "get <globalProperty>      : print current global property (windowSize, gridSize, ruleSet, seed, dist)\n";
     std::cout << "================================\n";
 }

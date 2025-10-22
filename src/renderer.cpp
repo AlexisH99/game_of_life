@@ -21,11 +21,9 @@ void Renderer::initRender() {
     float windowAspect = (float)cfg->width / (float)cfg->height;
 
     if (windowAspect > gridAspect) {
-        // Fenêtre plus large : bandes sur les côtés
         vertHeight = 1.0f;
         vertWidth  = gridAspect / windowAspect;
     } else {
-        // Fenêtre plus haute : bandes en haut/bas
         vertWidth  = 1.0f;
         vertHeight = windowAspect / gridAspect;
     }

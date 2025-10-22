@@ -189,8 +189,6 @@ const Console::CommandNode* Console::findNode(const CommandNode& root, const std
     for (const auto& t : tokens) {
         auto it = node->children.find(t);
         if (it == node->children.end()) {
-            // On s'arrête dès que le prochain token n'existe plus :
-            // les tokens restants sont des arguments
             break;
         }
         node = &it->second;
@@ -234,7 +232,6 @@ void Console::execute(const std::string& command) {
 std::vector<std::string> Console::suggest(const CommandNode& root, const std::vector<std::string>& tokens, bool endsWithSpace) {
     const CommandNode* node = &root;
 
-    // Si on a des tokens, on parcourt l'arbre jusqu'au dernier token connu
     size_t limit = tokens.size();
     if (!endsWithSpace && !tokens.empty())
         limit = tokens.size() - 1;
@@ -248,7 +245,6 @@ std::vector<std::string> Console::suggest(const CommandNode& root, const std::ve
 
     std::vector<std::string> matches;
     if (endsWithSpace) {
-        // Liste tous les sous-commandes possibles du dernier nœud
         for (const auto& [key, child] : node->children)
             matches.push_back(key);
     } else if (!tokens.empty()) {
@@ -265,7 +261,6 @@ std::vector<std::string> Console::suggest(const CommandNode& root, const std::ve
 
     return matches;
 }
-
 
 void Console::draw(GLFWwindow* window) {
     if (!visible) return;
@@ -329,21 +324,18 @@ void Console::draw(GLFWwindow* window) {
         prefix = "";
     }
 
-    // Enregistre les suggestions courantes pour le cyclage
     currentSuggestions = matches;
     currentPrefix = prefix;
 
-    // Reset index si besoin
     if (currentSuggestionIndex >= (int)currentSuggestions.size() || currentSuggestionIndex == -1)
         currentSuggestionIndex = 0;
 
-    // Génère le texte affiché
     if (!currentSuggestions.empty()) {
         const std::string& full = currentSuggestions[currentSuggestionIndex];
         if (full.size() > prefix.size()) {
             suggestionText = full.substr(prefix.size());
         } else if (endsWithSpace) {
-            suggestionText = full; // suggérer le mot entier
+            suggestionText = full;
         }
     }
 
@@ -374,7 +366,6 @@ void Console::draw(GLFWwindow* window) {
     glUniform4f(glGetUniformLocation(shaders->get(), "uColor"), 0.0f, 1.0f, 0.0f, 1.0f);
     glDrawArrays(GL_POINTS, 0, pts.size() / 2);
 
-    // input
     vboInput->bind();
     vboInput->set_data(ptsInput.size() * sizeof(float), ptsInput.data(), GL_STREAM_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
@@ -382,7 +373,6 @@ void Console::draw(GLFWwindow* window) {
     glUniform4f(glGetUniformLocation(shaders->get(), "uColor"), 0.0f, 1.0f, 0.0f, 1.0f);
     glDrawArrays(GL_POINTS, 0, ptsInput.size() / 2);
 
-    // suggestion
     vboSuggest->bind();
     vboSuggest->set_data(ptsSuggest.size() * sizeof(float), ptsSuggest.data(), GL_STREAM_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
@@ -433,11 +423,9 @@ void Console::handleInput([[maybe_unused]]GLFWwindow* win, int key, int action) 
                 if ((glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)) {
                     currentSuggestionIndex = (currentSuggestionIndex - 1) % currentSuggestions.size();
                     std::string next = currentSuggestions[currentSuggestionIndex];
-                    std::cout << "Suggestion: " << next << std::endl;
                 } else {
                     currentSuggestionIndex = (currentSuggestionIndex + 1) % currentSuggestions.size();
                     std::string next = currentSuggestions[currentSuggestionIndex];
-                    std::cout << "Suggestion: " << next << std::endl;
                 }
             }
         } 

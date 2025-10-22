@@ -100,9 +100,11 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
                 }
             }
         }
+
         if (app->grid->pause && key == GLFW_KEY_RIGHT && action == GLFW_PRESS && !app->console->visible) {
             app->grid->step();
         }
+
         if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
             app->console->visible = !app->console->visible;
         }
@@ -198,14 +200,11 @@ void Application::cursor_position_callback(GLFWwindow* window, double xpos, doub
 
         r->camX = std::clamp(r->camX, 0.0f, c->gridx - visibleWidth);
         r->camY = std::clamp(r->camY, 0.0f, c->gridy - visibleHeight);
-
-        std::cout << r->camX << " " << r->camY << "\n";
     }
 
     lastX = xpos;
     lastY = ypos;
 }
-
 
 void Application::loadConfig() {
     cfg = std::make_unique<Config>();
