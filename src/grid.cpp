@@ -14,11 +14,10 @@ Grid::~Grid() {
 void Grid::initSeed() {
     if (cfg->randomSeed) {
         gridSeed = std::random_device{}();
-        rng.seed(gridSeed);
     } else {
         gridSeed = cfg->seed;
-        rng.seed(gridSeed);
     }
+    rng.seed(gridSeed);
 }
 
 void Grid::initSize() {
