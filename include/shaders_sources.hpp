@@ -27,8 +27,21 @@ static constexpr const char* mainFrag = R"(
     out vec4 FragColor;
 
     void main() {
-        float gx_f = camera.x + (gl_FragCoord.x - 0.5) * (gridSize.x / windowSize.x) / zoom;
-        float gy_f = gridSize.y - (camera.y + (gl_FragCoord.y + 0.5) * (gridSize.y / windowSize.y) / zoom);
+        float windowAspect = windowSize.x / windowSize.y;
+        float gridAspect   = gridSize.x / gridSize.y;
+
+        vec2 correctedCoord = gl_FragCoord.xy;
+
+        if (windowAspect > gridAspect) {
+            float scale = windowAspect / gridAspect;
+            correctedCoord.x = (gl_FragCoord.x - 0.5 * windowSize.x) * scale + 0.5 * windowSize.x;
+        } else {
+            float scale = gridAspect / windowAspect;
+            correctedCoord.y = (gl_FragCoord.y - 0.5 * windowSize.y) * scale + 0.5 * windowSize.y;
+        }
+            
+        float gx_f = camera.x + (correctedCoord.x - 0.5) * (gridSize.x / windowSize.x) / zoom;
+        float gy_f = gridSize.y - (camera.y + (correctedCoord.y + 0.5) * (gridSize.y / windowSize.y) / zoom);
 
         int gx = int(gx_f);
         int gy = int(gy_f);

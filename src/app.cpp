@@ -32,6 +32,7 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
         glViewport(0, 0, width, height);
         app->cfg->width = width;
         app->cfg->height = height;
+        app->renderer->initRender();
     }
 }
 
@@ -206,9 +207,13 @@ void Application::loadConfig() {
     cfg = std::make_unique<Config>();
     cfg->initConfig("config.jsonc");
     cfg->printAllParams();
-    if (cfg->width < 120) {
-        std::cout << "Warning : minimum allowed width is 120. Moved back to this value.\n";
-        cfg->width = 120;
+    if (cfg->width < 800) {
+        std::cout << "Warning : minimum allowed width is 800. Moved back to this value.\n";
+        cfg->width = 800;
+    }
+    if (cfg->height < 600) {
+        std::cout << "Warning : minimum allowed height is 600. Moved back to this value.\n";
+        cfg->height = 600;
     }
 }
 
@@ -271,6 +276,7 @@ void Application::initGrid() {
 
 void Application::initRender() {
     renderer = std::make_unique<Renderer>(grid.get(), cfg.get());
+    renderer->initRender();
 }
 
 void Application::initConsole() {

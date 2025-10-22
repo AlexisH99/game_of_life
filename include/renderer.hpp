@@ -10,7 +10,7 @@ class Renderer {
     public:
         Renderer(const Grid* grid, const Config* cfg);
 
-        void reset();
+        void initRender();
         void render();
 
         float zoom = 1.0f;
@@ -21,8 +21,14 @@ class Renderer {
         float maxZoom = 100.0f;
 
     private:
-        int words_per_row, rows;
         const uint32_t* grid_data;
+        std::vector<float> vertices;
+
+        float vertWidth = 0.0f;
+        float vertHeight = 0.0f;
+
+        float widthRatio = 0.0f;
+        float heightRatio = 0.0f;
 
         const Grid* grid = nullptr;
         const Config* cfg = nullptr;

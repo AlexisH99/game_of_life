@@ -12,8 +12,8 @@ class Config {
         Config();
         ~Config();
 
-        int width = 500;
-        int height = 500;
+        int width = 800;
+        int height = 600;
         int gridx = 500;
         int gridy = 500;
         std::string rulestr = "B3S23";

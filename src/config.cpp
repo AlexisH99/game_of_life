@@ -105,8 +105,19 @@ void Config::loadConfig(const std::string& path) {
 
     if (j.contains("window")) {
         auto& w = j["window"];
-        if (w.contains("width"))  width = w["width"];
-        if (w.contains("height")) height = w["height"];
+        if (w.contains("width")) {
+            if (w["width"] < 800) {
+                width = 800;
+            } else {
+                width = w["width"];}
+            }
+        if (w.contains("height")) {
+            if (w["height"] < 600) {
+                height = 600;
+            } else {
+                height = w["height"];
+            }
+        }
     }
 
     if (j.contains("grid")) {

@@ -387,7 +387,7 @@ void Console::draw(GLFWwindow* window) {
     vboSuggest->set_data(ptsSuggest.size() * sizeof(float), ptsSuggest.data(), GL_STREAM_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
-    glUniform4f(glGetUniformLocation(shaders->get(), "uColor"), 0.8f, 0.2f, 0.2f, 0.6f);
+    glUniform4f(glGetUniformLocation(shaders->get(), "uColor"), 0.9f, 0.15f, 0.15f, 0.8f);
     glDrawArrays(GL_POINTS, 0, ptsSuggest.size() / 2);
 
     glDisable(GL_BLEND);
@@ -535,9 +535,23 @@ void Console::command_step(int n_step, float delay) {
 }
 
 void Console::setWindowSize(int w, int h) {
-    cfg->width = w;
-    cfg->height = h;
-    if (cfg->window) glfwSetWindowSize(cfg->window, w, h);
+    if (w < 800) {
+        cfg->width = 800;
+        log("minimum window width is 800");
+    } else {
+        cfg->width = w;
+    }
+    if (h < 600) {
+        cfg->width = 600;
+        log("minimum window height is 600");
+    } else {
+        cfg->width = h;
+    }
+    if (cfg->window) {
+        glfwSetWindowSize(cfg->window, w, h);
+        renderer->initRender();
+        renderer->render();
+    }
 }
 
 void Console::setGridSize(int x, int y) {
@@ -546,7 +560,7 @@ void Console::setGridSize(int x, int y) {
     grid->initSize();
     grid->initMask();
     grid->initRandomGrid();
-    renderer->reset();
+    renderer->initRender();
     renderer->render();
 }
 
