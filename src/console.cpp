@@ -25,6 +25,9 @@ Console::~Console() {
 void Console::init() {
     vao = std::make_unique<GLVertexBuffer>();
     vbo = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);
+    vboLogs = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);
+    vboInput = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);
+    vboSuggest = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);
     shaders = std::make_unique<GLProgram>(consoleVert, consoleFrag);
 
     log("Available commands:");
@@ -34,6 +37,140 @@ void Console::init() {
     log("  set <globalProperty> [values]");
     log("Available globalProperties:");
     log("  windowSize | gridSize | ruleSet | seed | dist");
+
+    root.add("help", [&](const auto&) {
+        log("Available commands:");
+        log("  start / stop / regen");
+        log("  step <n_steps> <delay>");
+        log("  get <globalProperty>");
+        log("  set <globalProperty> [values]");
+        log("Available globalProperties:");
+        log("  windowSize | gridSize | ruleSet | seed | dist");
+    });
+    
+    root.add("start", [&](const auto& args){
+        if (args.size() > 1) log("ignored arguments after 'start'");
+        command_start();
+    });
+    root.add("stop",  [&](const auto& args){
+        if (args.size() > 1) log("ignored arguments after 'stop'");
+        command_stop();
+    });
+    root.add("regen", [&](const auto& args){
+        if (args.size() > 1) log("ignored arguments after 'regen'");
+        command_regen();
+    });
+
+    root.add("step", [&](const auto& args){
+        if (args.size() == 1) command_step();
+        else if (args.size() == 2) {
+            auto n = from_string<int>(args[1]);
+            if (!n) log("Usage: step <int>");
+            else command_step(*n);
+        } else if (args.size() == 3) {
+            auto n = from_string<int>(args[1]);
+            auto d = from_string<float>(args[2]);
+            if (!n || !d) log("Usage: step <int> <float>");
+            else command_step(*n, *d);
+        } else log("Usage: step <int> [float]");
+    });
+
+    auto& get = root.add("get");
+    get.add("windowSize", [&](auto&){ getWindowSize(); });
+    get.add("gridSize",   [&](auto&){ getGridSize(); });
+
+    auto& set = root.add("set");
+    set.add("windowSize", [&](auto& args){
+        if (args.size() != 4) {
+            log("Usage: set windowSize <int|.> <int|.>");
+            return;
+        }
+        auto w_str = args[2], h_str = args[3];
+
+        if (w_str == "." && h_str == ".") {
+            log("Unchanged window size");
+            return;
+        }
+
+        auto w = (w_str == ".") ? std::optional<int>() : from_string<int>(w_str);
+        auto h = (h_str == ".") ? std::optional<int>() : from_string<int>(h_str);
+
+        if ((w_str != "." && !w) || (h_str != "." && !h)) {
+            log("Error: invalid arguments");
+            log("Usage: set windowSize <int|.> <int|.>");
+            return;
+        }
+
+        setWindowSize(w.value_or(cfg->width), h.value_or(cfg->height));
+        return;
+    });
+    
+    set.add("gridSize",   [&](auto& args){
+        if (args.size() != 4) {
+            log("Usage: set gridSize <int> <int>");
+            return;
+        }
+
+        auto gx = from_string<int>(args[2]);
+        auto gy = from_string<int>(args[3]);
+
+        if (!gx || !gy) {
+            log("Error: invalid arguments");
+            log("Usage: set gridSize <int> <int>");
+            return;
+        }
+
+        setGridSize(*gx, *gy);
+        return;
+    });
+
+    set.add("ruleSet", [&](auto& args){
+        if (args.size() != 2) {
+            log("Usage: set ruleSet <str>");
+            return;
+        }
+        setRuleset(args[1]);
+        return;
+    });
+
+    set.add("seed", [&](auto& args){
+        if (args.size() != 3) {
+            log("Usage: set seed <str>/<int>");
+            return;
+        }
+        auto seed = from_string<int>(args[2]);
+
+        if (!seed) {
+            if (args[2] == "rnd") {
+                setSeed(true, 0);
+                log("Random seed");
+            } else {
+                log("Error: invalid argument '" + args[2] + "'");
+                log("Usage: set seed <str>/<int>");
+            }
+        } else {
+            setSeed(false, *seed);
+            log("Set seed to: " + std::to_string(grid->gridSeed));
+        }
+        return;
+    });
+
+    set.add("dist", [&](auto& args){
+        if (args.size() != 3 && args.size() != 4) {
+            log("Usage: set ruleSet <str> <float>");
+            return;
+        }
+        auto distType = args[2];
+        auto [ok, msg] = cfg->parseDistType(distType);
+        if (args.size() == 3) {
+            setDistrib(distType);
+        }
+        if (args.size() == 4) {
+            auto density = from_string<float>(args[3]);
+            setDistrib(distType, *density);
+        }
+        return;
+    });    
 }
 
 template<typename T>
@@ -45,6 +182,30 @@ std::optional<T> Console::from_string(const std::string& s) {
 
     if (ec == std::errc()) return value;
     return std::nullopt;
+}
+
+const Console::CommandNode* Console::findNode(const CommandNode& root, const std::vector<std::string>& tokens) {
+    const CommandNode* node = &root;
+    for (const auto& t : tokens) {
+        auto it = node->children.find(t);
+        if (it == node->children.end()) {
+            // On s'arrête dès que le prochain token n'existe plus :
+            // les tokens restants sont des arguments
+            break;
+        }
+        node = &it->second;
+    }
+    return node;
+}
+
+void Console::executeCommand(const CommandNode& root, const std::vector<std::string>& tokens) {
+    const Console::CommandNode* node = findNode(root, tokens);
+    if (!node) {
+        log("Unknown command: " + tokens[0]);
+        return;
+    }
+    if (node->action) node->action(tokens);
+    else log("Incomplete command: missing subcommand");
 }
 
 void Console::log(const std::string& s) {
@@ -66,177 +227,51 @@ void Console::execute(const std::string& command) {
         tokens.push_back(token);
 
     if (tokens.empty()) return;
-    const std::string& cmd = tokens[0];
-
-    static const std::unordered_map<std::string, std::function<void(const std::vector<std::string>&)>> baseCommands = {
-        { "start", [&](const auto&) { command_start(); } },
-        { "stop",  [&](const auto&) { command_stop(); } },
-        { "regen", [&](const auto&) {
-            command_regen();
-            if (cfg->randomSeed) {
-                log("Set seed to: " + std::to_string(grid->gridSeed));
-            } else {
-                log("Seed: " + std::to_string(grid->gridSeed));
-            }
-        } },
-
-        { "step", [&](const auto& args) {
-            if (args.size() == 1) {
-                command_step();
-            } else if (args.size() == 2) {
-                auto n = from_string<int>(args[1]);
-                if (!n) log("Usage: step <int>");
-                else command_step(*n);
-            } else if (args.size() == 3) {
-                auto n = from_string<int>(args[1]);
-                auto d = from_string<float>(args[2]);
-                if (!n || !d) log("Usage: step <int> <float>");
-                else command_step(*n, *d);
-            } else log("Usage: step <int> [float]");
-        }},
-
-        { "help", [&](const auto&) {
-            log("Available commands:");
-            log("  start / stop / regen");
-            log("  step <n_steps> <delay>");
-            log("  get <globalProperty>");
-            log("  set <globalProperty> [values]");
-            log("Available globalProperties:");
-            log("  windowSize | gridSize | ruleSet | seed | dist");
-        }},
-    };
-
-    if (cmd == "get") {
-        if (tokens.size() != 2) {
-            log("Usage: get <windowSize|gridSize>");
-            return;
-        }
-        const auto& sub = tokens[1];
-        if (sub == "windowSize") {
-            getWindowSize();
-        } else if (sub == "gridSize") {
-            getGridSize();
-        } else {
-            log("Unknown parameter: " + sub);
-        }
-        return;
-    }
-
-    if (cmd == "set") {
-        if (tokens.size() < 2) {
-            log("Usage: set <windowSize|gridSize> <values>");
-            return;
-        }
-
-        const auto& sub = tokens[1];
-
-        if (sub == "windowSize") {
-            if (tokens.size() != 4) {
-                log("Usage: set windowSize <int|.> <int|.>");
-                return;
-            }
-            auto w_str = tokens[2], h_str = tokens[3];
-
-            if (w_str == "." && h_str == ".") {
-                log("Unchanged window size");
-                return;
-            }
-
-            auto w = (w_str == ".") ? std::optional<int>() : from_string<int>(w_str);
-            auto h = (h_str == ".") ? std::optional<int>() : from_string<int>(h_str);
-
-            if ((w_str != "." && !w) || (h_str != "." && !h)) {
-                log("Error: invalid arguments");
-                log("Usage: set windowSize <int|.> <int|.>");
-                return;
-            }
-
-            setWindowSize(w.value_or(cfg->width), h.value_or(cfg->height));
-            return;
-        }
-
-        if (sub == "gridSize") {
-            if (tokens.size() != 4) {
-                log("Usage: set gridSize <int> <int>");
-                return;
-            }
-
-            auto gx = from_string<int>(tokens[2]);
-            auto gy = from_string<int>(tokens[3]);
-
-            if (!gx || !gy) {
-                log("Error: invalid arguments");
-                log("Usage: set gridSize <int> <int>");
-                return;
-            }
-
-            setGridSize(*gx, *gy);
-            return;
-        }
-
-        if (sub == "ruleSet") {
-            if (tokens.size() != 3) {
-                log("Usage: set ruleSet <str>");
-                return;
-            }
-            setRuleset(tokens[2]);
-            return;
-        }
-
-        if (sub == "seed") {
-            if (tokens.size() != 3) {
-                log("Usage: set ruleSet <str>/<int>");
-                return;
-            }
-            auto seed = from_string<int>(tokens[2]);
-            if (!seed) {
-                if (tokens[2] == "rnd") {
-                    setSeed(true, 0);
-                    log("Random seed");
-                } else {
-                    log("Error: invalid argument '" + tokens[2] + "'");
-                    log("Usage: set ruleSet <str>/<int>");
-                }
-            } else {
-                setSeed(false, *seed);
-                log("Set seed to: " + std::to_string(grid->gridSeed));
-            }
-            return;
-        }
-
-        if (sub == "dist") {
-            if (tokens.size() != 3 && tokens.size() != 4) {
-                log("Usage: set ruleSet <str> <float>");
-                return;
-            }
-            auto distType = tokens[2];
-            auto [ok, msg] = cfg->parseDistType(distType);
-            if (tokens.size() == 3) {
-                setDistrib(distType);
-            }
-            if (tokens.size() == 4) {
-                auto density = from_string<float>(tokens[3]);
-                setDistrib(distType, *density);
-            }
-            return;
-        }
-
-        log("Unknown parameter: " + sub);
-        return;
-    }
-
-    auto it = baseCommands.find(cmd);
-    if (it != baseCommands.end()) {
-        it->second(tokens);
-        return;
-    }
-
-    log("Unknown command: " + cmd);
-    log("Type 'help' for available commands.");
+    
+    executeCommand(root, tokens);
 }
+
+std::vector<std::string> Console::suggest(const CommandNode& root, const std::vector<std::string>& tokens, bool endsWithSpace) {
+    const CommandNode* node = &root;
+
+    // Si on a des tokens, on parcourt l'arbre jusqu'au dernier token connu
+    size_t limit = tokens.size();
+    if (!endsWithSpace && !tokens.empty())
+        limit = tokens.size() - 1;
+
+    for (size_t i = 0; i < limit; ++i) {
+        auto it = node->children.find(tokens[i]);
+        if (it == node->children.end())
+            return {};
+        node = &it->second;
+    }
+
+    std::vector<std::string> matches;
+    if (endsWithSpace) {
+        // Liste tous les sous-commandes possibles du dernier nœud
+        for (const auto& [key, child] : node->children)
+            matches.push_back(key);
+    } else if (!tokens.empty()) {
+        const std::string& prefix = tokens.back();
+        for (const auto& [key, child] : node->children) {
+            if (key.starts_with(prefix))
+                matches.push_back(key);
+        }
+    } else {
+        // Aucun token (entrée vide)
+        for (const auto& [key, child] : node->children)
+            matches.push_back(key);
+    }
+
+    return matches;
+}
+
 
 void Console::draw(GLFWwindow* window) {
     if (!visible) return;
+    pts.clear();
+    ptsInput.clear();
+    ptsSuggest.clear();
     shaders->use();
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -262,7 +297,6 @@ void Console::draw(GLFWwindow* window) {
     glUniform4f(glGetUniformLocation(shaders->get(), "uColor"), 0.0f, 0.0f, 0.15f, 0.75f);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    pts.clear();
     int lineHeight = 10;
     maxVisibleLines = (int)(cHeight / lineHeight) - 3;
     if (maxVisibleLines < 1) maxVisibleLines = 1;
@@ -273,11 +307,88 @@ void Console::draw(GLFWwindow* window) {
         appendText(pts, 10, y, lines[i]);
         y += lineHeight;
     }
-    appendText(pts, 10, cHeight - lineHeight, "> " + input + "_");
 
-    vbo->set_data(pts.size() * sizeof(float), pts.data(), GL_STREAM_DRAW);
+    auto tokens = std::vector<std::string>();
+    {
+        std::istringstream iss(input);
+        std::string t;
+        while (iss >> t) tokens.push_back(t);
+    }
+
+    suggestionText = "";
+    endsWithSpace = !input.empty() && std::isspace(input.back());
+    
+    if (endsWithSpace) {
+        matches = suggest(root, tokens, true);
+        prefix = "";
+    } else if (!tokens.empty()) {
+        matches = suggest(root, tokens, false);
+        prefix = tokens.back();
+    } else {
+        matches = suggest(root, tokens, false);
+        prefix = "";
+    }
+
+    // Enregistre les suggestions courantes pour le cyclage
+    currentSuggestions = matches;
+    currentPrefix = prefix;
+
+    // Reset index si besoin
+    if (currentSuggestionIndex >= (int)currentSuggestions.size() || currentSuggestionIndex == -1)
+        currentSuggestionIndex = 0;
+
+    // Génère le texte affiché
+    if (!currentSuggestions.empty()) {
+        const std::string& full = currentSuggestions[currentSuggestionIndex];
+        if (full.size() > prefix.size()) {
+            suggestionText = full.substr(prefix.size());
+        } else if (endsWithSpace) {
+            suggestionText = full; // suggérer le mot entier
+        }
+    }
+
+    std::string prompt = "> " + input;
+    appendText(ptsInput, 10, cHeight - lineHeight, prompt);
+
+    int inputPixelWidth = static_cast<int>(prompt.size() * 8);
+    if (!suggestionText.empty()) {
+        appendText(ptsSuggest, 10 + inputPixelWidth, cHeight - lineHeight, suggestionText);
+    }
+
+    if (!currentSuggestions.empty()) {
+        std::string all = "[ ";
+        for (int i = 0; i < (int)currentSuggestions.size(); ++i) {
+            if (i == currentSuggestionIndex)
+                all += ">"+currentSuggestions[i]+"< ";
+            else
+                all += currentSuggestions[i]+" ";
+        }
+        all += "]";
+        appendText(ptsSuggest, 10, cHeight - 2*lineHeight, all);
+    }
+
+    vboLogs->bind();
+    vboLogs->set_data(pts.size() * sizeof(float), pts.data(), GL_STREAM_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(0);
     glUniform4f(glGetUniformLocation(shaders->get(), "uColor"), 0.0f, 1.0f, 0.0f, 1.0f);
-    glDrawArrays(GL_POINTS, 0, pts.size()/2);
+    glDrawArrays(GL_POINTS, 0, pts.size() / 2);
+
+    // input
+    vboInput->bind();
+    vboInput->set_data(ptsInput.size() * sizeof(float), ptsInput.data(), GL_STREAM_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(0);
+    glUniform4f(glGetUniformLocation(shaders->get(), "uColor"), 0.0f, 1.0f, 0.0f, 1.0f);
+    glDrawArrays(GL_POINTS, 0, ptsInput.size() / 2);
+
+    // suggestion
+    vboSuggest->bind();
+    vboSuggest->set_data(ptsSuggest.size() * sizeof(float), ptsSuggest.data(), GL_STREAM_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(0);
+    glUniform4f(glGetUniformLocation(shaders->get(), "uColor"), 0.8f, 0.2f, 0.2f, 0.6f);
+    glDrawArrays(GL_POINTS, 0, ptsSuggest.size() / 2);
 
     glDisable(GL_BLEND);
 }
@@ -285,19 +396,28 @@ void Console::draw(GLFWwindow* window) {
 void Console::handleInput([[maybe_unused]]GLFWwindow* win, int key, int action) {
     if (!visible) return;
     if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+        
         if (key == GLFW_KEY_ENTER) {
             execute(input);
             input.clear();
             lineOffset = std::max(0, (int)lines.size() - maxVisibleLines);
-        } else if (key == GLFW_KEY_BACKSPACE && !input.empty()) {
+        }
+
+        else if (key == GLFW_KEY_BACKSPACE && !input.empty()) {
             input.pop_back();
-        } else if (key == GLFW_KEY_UP) {
+            currentSuggestions.clear();
+            currentSuggestionIndex = -1;
+        }
+
+        else if (key == GLFW_KEY_UP) {
             commandIndex += 1;
             commandIndex = std::clamp(commandIndex, 0, (int)commandHistory.size());
             if (commandHistory.size() == 0) return;
             input.clear();
             input = commandHistory[commandIndex-1];
-        } else if (key == GLFW_KEY_DOWN) {
+        }
+
+        else if (key == GLFW_KEY_DOWN) {
             commandIndex -= 1;
             commandIndex = std::clamp(commandIndex, 0, (int)commandHistory.size());
             if (commandHistory.size() == 0 || commandIndex == 0) {
@@ -307,7 +427,33 @@ void Console::handleInput([[maybe_unused]]GLFWwindow* win, int key, int action) 
             input.clear();
             input = commandHistory[commandIndex-1];
         }
-        if (key == GLFW_KEY_C && (glfwGetKey(win, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
+
+        else if (key == GLFW_KEY_TAB) {
+            if (!currentSuggestions.empty()) {
+                if ((glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)) {
+                    currentSuggestionIndex = (currentSuggestionIndex - 1) % currentSuggestions.size();
+                    std::string next = currentSuggestions[currentSuggestionIndex];
+                    std::cout << "Suggestion: " << next << std::endl;
+                } else {
+                    currentSuggestionIndex = (currentSuggestionIndex + 1) % currentSuggestions.size();
+                    std::string next = currentSuggestions[currentSuggestionIndex];
+                    std::cout << "Suggestion: " << next << std::endl;
+                }
+            }
+        } 
+
+        else if (key == GLFW_KEY_RIGHT) {
+            if (!currentSuggestions.empty() && currentSuggestionIndex >= 0) {
+                const std::string& full = currentSuggestions[currentSuggestionIndex];
+                if (full.size() > currentPrefix.size()) {
+                    input += full.substr(currentPrefix.size());
+                    currentSuggestions.clear();
+                    currentSuggestionIndex = -1;
+                }
+            }
+        }
+
+        else if (key == GLFW_KEY_C && (glfwGetKey(win, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
                           glfwGetKey(win, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)) {
             abortRequested = true;
         }
@@ -316,8 +462,11 @@ void Console::handleInput([[maybe_unused]]GLFWwindow* win, int key, int action) 
 
 void Console::handleChar(unsigned int codepoint) {
     if (!visible) return;
-    if (codepoint >= 32 && codepoint < 127)
+    if (codepoint >= 32 && codepoint < 127) {
         input.push_back((char)codepoint);
+        currentSuggestions.clear();
+        currentSuggestionIndex = -1;
+    }
 }
 
 void Console::appendText(std::vector<float>& pts, int x, int y, const std::string& text) {
