@@ -107,6 +107,10 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
             app->console->visible = !app->console->visible;
         }
 
+        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+            app->console->visible = false;
+        }
+
         if (app->console->visible) {
             app->console->handleInput(app->window->get(), key, action);
         }
