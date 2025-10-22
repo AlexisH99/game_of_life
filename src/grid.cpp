@@ -76,12 +76,10 @@ void Grid::initCheckerGrid() {
 
 void Grid::initRandomGrid() {
     if (cfg->distType == "uniform") {
-        std::cout << "debug: uniform\n";
         for (size_t i = 0; i < current.size(); ++i) {
             current[i] = uniform_dist(rng) & mask[i];
         }
     } else if (cfg->distType == "bernoulli") {
-        std::cout << "debug: bernoulli\n";
         bernoulli_dist = std::bernoulli_distribution(cfg->density);
         uint64_t word = 0ULL;
         for (size_t i = 0; i < current.size(); ++i) {
