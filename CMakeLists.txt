@@ -24,22 +24,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
-FetchContent_Declare(
-  lua
-  GIT_REPOSITORY https://github.com/lua/lua.git
-  GIT_TAG v5.4.7
-)
-FetchContent_GetProperties(lua)
-if (NOT lua_POPULATED)
-    FetchContent_MakeAvailable(lua)
-    file(GLOB LUA_SRC ${lua_SOURCE_DIR}/*.c)
-    list(REMOVE_ITEM LUA_SRC "${lua_SOURCE_DIR}/onelua.c")
-
-    add_library(lua STATIC ${LUA_SRC})
-    target_compile_options(lua PRIVATE -w)
-    target_include_directories(lua PUBLIC ${lua_SOURCE_DIR})
-endif()
-
 add_subdirectory(external/glad)
 
 execute_process(
