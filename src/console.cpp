@@ -125,11 +125,11 @@ void Console::initConsole() {
     });
 
     set.add("ruleSet", [&](auto& args){
-        if (args.size() != 2) {
+        if (args.size() != 3) {
             log("Usage: set ruleSet <str>");
             return;
         }
-        setRuleset(args[1]);
+        setRuleset(args[2]);
         return;
     });
 
