@@ -35,19 +35,19 @@ By hitting F1, a console opens and a few commands are available:
 | set           | \<globalProperty\> [args] | set global property according to args |
 | get           | none               | print global property |
 
-Global properties: `windowSize`, `gridSize`
+Global properties: `windowSize`, `gridSize`, `ruleSet`, `seed`, `dist`
 
 Next things to implement : 
 
-- More global properties **added seed and dist**
-- Command to resize grid : reinitGrid and reinitRenderer to be done
+- More global properties
+- Command to resize grid **DONE**
 - `step n_step` command in C++ side to get rendering between each step. **DONE**
 - `step n_step` command variant to get slowed loop (time per step as second argument) **DONE**
-- `help` command **WIP**
+- `help` command **DONE**
 - `set` or `toogle` commands for specific parameters **WIP**
-- Scrollable console (up to 1000 lines)
-- Command history (up to 100 commands)
-- Tab and autocompletion like in bash terminal
+- Scrollable console (up to 1000 lines) **DONE**
+- Command history (up to 100 commands) **DONE**
+- Tab and autocompletion like in bash terminal **DONE**
 
 ## Rules
 
@@ -180,10 +180,10 @@ The simulation could be memory bound in the future since a 50000x50000 (2.5 bill
 ## Planned features
 
 - Save/Load grid from .bin or/and .png
-- Zoom/Dezoom on the grid (Wheel for zoom/dezoom, mouse to move)
+- Zoom/Dezoom on the grid (Wheel for zoom/dezoom, mouse to move) **DONE**
 - Grid editor
-- Command line interface (Lua) -> **WIP**
-- Generalized rules for Moore neighborhood
+- Command line interface **DONE**
+- Generalized rules for Moore neighborhood **DONE**
 
 ## References
 
