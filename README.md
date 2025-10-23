@@ -1,4 +1,4 @@
-# Game of Life — C++ / OpenGL (Texture Renderer)
+# Game of Life — C++ / OpenGL
 
 A real-time implementation of Conway’s Game of Life written in modern C++, using GLFW and GLAD.  
 The simulation is computed on the CPU, while visualization is handled on the GPU through an OpenGL texture.
@@ -55,11 +55,27 @@ The number of neighbors is computed according to the Moore neighborhood :
 
 ![moore_neighborhood](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Moore_neighborhood_with_cardinal_directions.svg/375px-Moore_neighborhood_with_cardinal_directions.svg.png)  
 
+This is the original Conway's game of life rules, so called B3S23:
+
 | Current State | Live Neighbors | Next State |
 | ------------- | -------------- | ---------- |
 | Alive         | <2 or >3       | Dead       |
 | Alive         | 2 or 3         | Alive      |
 | Dead          | 3              | Alive      |
+
+The rule set is generalized and all Life-like rules can be used. Here is a few examples:
+| Nom                    | Règle         | Comportement                                  |
+| ---------------------- | ------------- | --------------------------------------------- |
+| **Conway’s Life**      | B3/S23        | equilibrium                                   |
+| **HighLife**           | B36/S23       | replicators                                   |
+| **Seeds**              | B2/S          | fast explosion                                |
+| **Diamoeba**           | B35678/S5678  | organic structures                            |
+| **Day & Night**        | B3678/S34678  | symetrical (alive and dead cells are the same)|
+| **Morley**             | B368/S245     | weak equilibrium                              |
+| **Life without Death** | B3/S012345678 | irreversible growth                           |
+
+My personnal favorite: **Fuzz** B1S4567
+Try it out !
 
 ## Concept
 
@@ -68,7 +84,8 @@ The number of neighbors is computed according to the Moore neighborhood :
 - Vectors `current` and `next`, store consecutive generations, while `mask` stores a mask of active cells.
 - `step()` iterates overs `current` to compute `next` using efficient bitwise operations, solving 64 per 64 cells.  
 - A single texture (`GL_RG32UI`) is updated each frame via `glTexSubImage2D`, by casting `current` as a vector of uint32_t.  
-- Rendering uses one fullscreen quad drawn with a fragment shader that unpacks and samples the texture using paddings and bitwise operations.
+- Rendering uses one quad drawn with a fragment shader that unpacks and samples the texture using paddings and bitwise operations.
+- The size of the rendered quad is computed to keep cells homothetic w.r. to window size changes, and with a 1:1 apect ratio.
 
 This method avoids heavy instancing, providing excellent performance even for large grids. All computations on CPU are currently monothread.
 
@@ -180,8 +197,10 @@ The simulation could be memory bound in the future since a 50000x50000 (2.5 bill
 ## Planned features
 
 - Save/Load grid from .bin or/and .png
-- Zoom/Dezoom on the grid (Wheel for zoom/dezoom, mouse to move) **DONE**
 - Grid editor
+- SIMD vectorization (AVX2)
+- OpenMP multithreading to scale performance with CPU cores
+- Zoom/Dezoom on the grid (Wheel for zoom/dezoom, mouse to move) **DONE**
 - Command line interface **DONE**
 - Generalized rules for Moore neighborhood **DONE**
 
