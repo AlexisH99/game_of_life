@@ -28,8 +28,8 @@ class Application {
 
         void loadConfig();
         void initGrid();
-        int initWindow();
-        int initGlad();
+        void initWindow();
+        void initGlad();
         void initRender();
         void initConsole();
         void mainLoop();
@@ -43,5 +43,4 @@ class Application {
         int fbWidth, fbHeight;
 
         std::string title = "GOL";
-
 };

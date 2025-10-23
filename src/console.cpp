@@ -22,7 +22,7 @@ Console::~Console() {
 
 }
 
-void Console::init() {
+void Console::initConsole() {
     vao = std::make_unique<GLVertexBuffer>();
     vbo = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);
     vboLogs = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);

@@ -18,7 +18,7 @@ class Console {
         Console(Config* cfg, Window* win, Grid* grid, Renderer* renderer);
         ~Console();
 
-        void init();
+        void initConsole();
         void draw(GLFWwindow* window);
         void log(const std::string& s);
         void execute(const std::string& command);

@@ -46,7 +46,7 @@ void Application::set_window_icon_from_resource(GLFWwindow* window) {
     );
 
     if (!hIcon) {
-        std::cerr << "Cannot load resource from executable" << std::endl;
+        std::cerr << "[Resource Error] cannot load resource from executable" << std::endl;
         return;
     }
 
@@ -131,10 +131,9 @@ void Application::scroll_callback(GLFWwindow* window, [[maybe_unused]]double xof
     Renderer* r = app->renderer.get();
     Config* c = app->cfg.get();
     Console* cons = app->console.get();
-
-        
-        double mouseX, mouseY;
-        glfwGetCursorPos(window, &mouseX, &mouseY);
+    
+    double mouseX, mouseY;
+    glfwGetCursorPos(window, &mouseX, &mouseY);
 
     if (!cons->visible || mouseY > cons->cHeight) {
         mouseY = c->height - mouseY;
@@ -164,30 +163,34 @@ void Application::scroll_callback(GLFWwindow* window, [[maybe_unused]]double xof
     } else {
         cons->scrollAccumulator += yoffset;
         const double threshold = 1.0f;
+
         while (cons->scrollAccumulator >= threshold) {
             cons->lineOffset -= 1;
             cons->scrollAccumulator -= threshold;
         }
+
         while (cons->scrollAccumulator <= threshold) {
             cons->lineOffset += 1;
             cons->scrollAccumulator += threshold;
         }
+
         int maxScroll = std::max(0, (int)cons->lines.size() - cons->maxVisibleLines);
         cons->lineOffset = std::clamp(cons->lineOffset, 0, maxScroll);
     }
 }
 
-void Application::cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
-    static double lastX = xpos, lastY = ypos;
+void Application::cursor_position_callback(GLFWwindow* window, double posX, double posY) {
     Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
     if (!app || !app->renderer) return;
 
     Renderer* r = app->renderer.get();
     Config* c = app->cfg.get();
 
+    static double last_posX = posX, last_posY = posY;
+
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-        double dx = xpos - lastX;
-        double dy = ypos - lastY;
+        double dx = posX - last_posX;
+        double dy = posY - last_posY;
 
         float cellPerPixelX = (c->gridx / r->zoom) / c->width;
         float cellPerPixelY = (c->gridy / r->zoom) / c->height;
@@ -202,8 +205,8 @@ void Application::cursor_position_callback(GLFWwindow* window, double xpos, doub
         r->camY = std::clamp(r->camY, 0.0f, c->gridy - visibleHeight);
     }
 
-    lastX = xpos;
-    lastY = ypos;
+    last_posX = posX;
+    last_posY = posY;
 }
 
 void Application::loadConfig() {
@@ -211,17 +214,18 @@ void Application::loadConfig() {
     cfg->initConfig("config.jsonc");
     cfg->printAllParams();
     if (cfg->width < 800) {
-        std::cout << "Warning : minimum allowed width is 800. Moved back to this value.\n";
+        std::cout << "[Config Warning] minimum allowed width is 800. Moved back to this value.\n";
         cfg->width = 800;
     }
     if (cfg->height < 600) {
-        std::cout << "Warning : minimum allowed height is 600. Moved back to this value.\n";
+        std::cout << "[Config Warning] minimum allowed height is 600. Moved back to this value.\n";
         cfg->height = 600;
     }
 }
 
-int Application::initWindow() {
+void Application::initWindow() {
     window = std::make_unique<Window>(cfg->width, cfg->height, title);
+    if (!window) throw std::runtime_error("[Runtime Error] Cannot initialize window context");
     cfg->window = window->get();
     window->makeContextCurrent();
     window->setUserPointer(this);
@@ -237,33 +241,27 @@ int Application::initWindow() {
     } else { 
         glfwSwapInterval(0);
     }
-
-    return 0;
 }
 
-int Application::initGlad() {
-    if (!gladLoadGL(glfwGetProcAddress)) {
-        std::cerr << "Error GLAD init" << std::endl;
-        return -1;
-    }
+void Application::initGlad() {
+    if (!gladLoadGL(glfwGetProcAddress)) throw std::runtime_error("[Runtime Error] Cannot initialize GLAD");
 
     const GLubyte* version = glGetString(GL_VERSION);
-    std::cout << "OpenGL version: " << version << std::endl;
-    if (!GLAD_GL_VERSION_3_3) throw std::runtime_error("OpenGL 3.3 or higher required.");
+    std::cout << "[Info] OpenGL version: " << version << std::endl;
+    if (!GLAD_GL_VERSION_3_3) throw std::runtime_error("[Runtime Error] OpenGL 3.3 or higher required.");
 
     GLint supported = 0;
     glGetInternalformativ(GL_TEXTURE_2D, GL_RG32UI, GL_INTERNALFORMAT_SUPPORTED, 1, &supported);
-    if (!supported) throw std::runtime_error("GL_RG32UI not supported on this GPU.");
+    if (!supported) throw std::runtime_error("[Runtime Error] GL_RG32UI not supported on this GPU.");
 
     glfwGetFramebufferSize(window->get(), &fbWidth, &fbHeight);
     glViewport(0, 0, fbWidth, fbHeight);
     glfwSetFramebufferSizeCallback(window->get(), framebuffer_size_callback);
-
-    return 0;
 }
 
 void Application::initGrid() {
     grid = std::make_unique<Grid>();
+    if (!grid) throw std::runtime_error("[Runtime Error] Cannot initialize grid");
     grid->cfg = cfg.get();
     grid->pause = cfg->freeze_at_start;
     grid->initSeed();
@@ -279,12 +277,14 @@ void Application::initGrid() {
 
 void Application::initRender() {
     renderer = std::make_unique<Renderer>(grid.get(), cfg.get());
+    if (!renderer) throw std::runtime_error("[Runtime Error] Cannot initialize renderer");
     renderer->initRender();
 }
 
 void Application::initConsole() {
     console = std::make_unique<Console>(cfg.get(), window.get(), grid.get(), renderer.get());
-    console->init();
+    if (!console) throw std::runtime_error("[Runtime Error] Cannot initialize console");
+    console->initConsole();
 }
 
 void Application::mainLoop() {
