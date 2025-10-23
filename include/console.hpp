@@ -19,22 +19,24 @@ class Console {
         ~Console();
 
         void initConsole();
-        void draw(GLFWwindow* window);
+        void draw();
         void log(const std::string& s);
         void execute(const std::string& command);
-        void handleInput(GLFWwindow* win, int key, int action);
+        void handleInput(int key, int action);
         void handleChar(unsigned int codepoint);
         void cleanup();
 
-        int commandIndex;
-        std::deque<std::string> commandHistory;
+        float cWidth, cHeight;
         bool visible = false;
         bool abortRequested = false;
-        float cWidth, cHeight;
+
         double scrollAccumulator = 0.0f;
         int lineOffset = 0;
         int maxVisibleLines;
         std::deque<std::string> lines;
+
+        int commandIndex;
+        std::deque<std::string> commandHistory;
 
         std::vector<std::string> currentSuggestions;
         int currentSuggestionIndex = -1;

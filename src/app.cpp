@@ -114,7 +114,7 @@ void Application::key_callback(GLFWwindow* window, int key, [[maybe_unused]]int 
         }
 
         if (app->console->visible) {
-            app->console->handleInput(app->window->get(), key, action);
+            app->console->handleInput(key, action);
         }
     }
 }
@@ -297,7 +297,7 @@ void Application::mainLoop() {
     while (!glfwWindowShouldClose(window->get())) {
         renderer->render();
 
-        console->draw(window->get());
+        console->draw();
         
         glfwSwapBuffers(window->get());
         

@@ -262,7 +262,7 @@ std::vector<std::string> Console::suggest(const CommandNode& root, const std::ve
     return matches;
 }
 
-void Console::draw(GLFWwindow* window) {
+void Console::draw() {
     if (!visible) return;
     pts.clear();
     ptsInput.clear();
@@ -272,7 +272,7 @@ void Console::draw(GLFWwindow* window) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    glfwGetFramebufferSize(win->get(), &fbWidth, &fbHeight);
 
     cWidth = (float)fbWidth;
     cHeight = (float)(0.3 * fbHeight);
@@ -383,7 +383,7 @@ void Console::draw(GLFWwindow* window) {
     glDisable(GL_BLEND);
 }
 
-void Console::handleInput([[maybe_unused]]GLFWwindow* win, int key, int action) {
+void Console::handleInput(int key, int action) {
     if (!visible) return;
     if (action == GLFW_PRESS || action == GLFW_REPEAT) {
         
@@ -420,7 +420,7 @@ void Console::handleInput([[maybe_unused]]GLFWwindow* win, int key, int action) 
 
         else if (key == GLFW_KEY_TAB) {
             if (!currentSuggestions.empty()) {
-                if ((glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)) {
+                if ((glfwGetKey(win->get(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(win->get(), GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)) {
                     currentSuggestionIndex = (currentSuggestionIndex - 1) % currentSuggestions.size();
                     std::string next = currentSuggestions[currentSuggestionIndex];
                 } else {
@@ -441,8 +441,8 @@ void Console::handleInput([[maybe_unused]]GLFWwindow* win, int key, int action) 
             }
         }
 
-        else if (key == GLFW_KEY_C && (glfwGetKey(win, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
-                          glfwGetKey(win, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)) {
+        else if (key == GLFW_KEY_C && (glfwGetKey(win->get(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
+                          glfwGetKey(win->get(), GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)) {
             abortRequested = true;
         }
     }
@@ -511,7 +511,7 @@ void Console::command_step(int n_step, float delay) {
         }
         
         renderer->render();
-        draw(win->get());
+        draw();
         glfwSwapBuffers(win->get());
         glfwPollEvents();
     }
@@ -525,18 +525,18 @@ void Console::command_step(int n_step, float delay) {
 void Console::setWindowSize(int w, int h) {
     if (w < 800) {
         cfg->width = 800;
-        log("minimum window width is 800");
+        log("[Warning] minimum window width is 800");
     } else {
         cfg->width = w;
     }
     if (h < 600) {
         cfg->width = 600;
-        log("minimum window height is 600");
+        log("[Warning] minimum window height is 600");
     } else {
         cfg->width = h;
     }
-    if (cfg->window) {
-        glfwSetWindowSize(cfg->window, w, h);
+    if (win->get()) {
+        glfwSetWindowSize(win->get(), w, h);
         renderer->initRender();
         renderer->render();
     }
@@ -587,11 +587,11 @@ void Console::setDistrib(std::string distType, float density) {
 }
 
 void Console::getWindowSize() {
-    log(std::format("Window size: {}x{}", cfg->width, cfg->height));
+    log(std::format("window size: {}x{}", cfg->width, cfg->height));
 }
 
 void Console::getGridSize() {
-    log(std::format("Grid size: {}x{}", cfg->gridx, cfg->gridy));
+    log(std::format("grid size: {}x{}", cfg->gridx, cfg->gridy));
 }
 
 void Console::cleanup() {
