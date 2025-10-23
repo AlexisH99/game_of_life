@@ -63,6 +63,6 @@ add_executable(game_of_life
 )
 
 target_include_directories(game_of_life PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(game_of_life PRIVATE glfw glad lua nlohmann_json::nlohmann_json)
+target_link_libraries(game_of_life PRIVATE glfw glad nlohmann_json::nlohmann_json)
 target_compile_options(game_of_life PRIVATE -Wall -Wextra -Wpedantic)
 target_link_options(game_of_life PRIVATE ${APP_RES})
