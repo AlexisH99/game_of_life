@@ -23,7 +23,7 @@ Window::Window(int width, int height, const std::string& title) {
 Window::~Window() {
     if (handle) {
         glfwDestroyWindow(handle);
-        glfwTerminate();
+        handle = nullptr;
     }
 }
 

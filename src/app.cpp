@@ -320,4 +320,6 @@ void Application::mainLoop() {
             lastTime = currentTime;
         }
     }
+
+    glfwTerminate();
 }
