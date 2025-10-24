@@ -26,6 +26,8 @@ FetchContent_MakeAvailable(nlohmann_json)
 
 add_subdirectory(external/glad)
 
+find_package(OpenMP REQUIRED)
+
 execute_process(
     COMMAND git describe --tags --always --dirty
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -62,7 +64,12 @@ add_executable(game_of_life
     ${APP_RES}
 )
 
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(game_of_life PRIVATE OpenMP::OpenMP_CXX)
+    target_compile_definitions(game_of_life PRIVATE USE_OPENMP)
+endif()
+
 target_include_directories(game_of_life PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(game_of_life PRIVATE glfw glad nlohmann_json::nlohmann_json)
-target_compile_options(game_of_life PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_options(game_of_life PRIVATE -Wall -Wextra -Wpedantic -march=native -O3)
 target_link_options(game_of_life PRIVATE ${APP_RES})
