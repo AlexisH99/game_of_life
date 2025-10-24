@@ -16,20 +16,23 @@ Config::~Config() {
 
 }
 
+// Config initialization
 void Config::initConfig(const std::string& p) {
     path = p;
+    // Check if 'config.jsonc' exists
     if (!std::filesystem::exists(path)) {
         std::cout << "No config.jsonc found. Creating default one..." << std::endl;
-        saveConfig(path);
+        saveConfig(path); // Create config file
     } else {
         std::cout << "Loading existing config.jsonc..." << std::endl;
         try {
-            loadConfig(path);
+            loadConfig(path); // Loads config file
         } catch (const std::exception& e) {
             std::cerr << "Error reading config: " << e.what() << std::endl;
         }
     }
 
+    // Ruleset parsing
     {auto [ok, msg] = parseRuleset(rulestr);
     if (!ok) {
         std::cout << msg << "\n";
@@ -37,6 +40,7 @@ void Config::initConfig(const std::string& p) {
     }
     std::cout << msg << "\n";}
 
+    // Distribution type parsing
     {auto [ok,msg] = parseDistType(distType);
     if (!ok) {
         std::cout << msg << "\n";
@@ -45,6 +49,7 @@ void Config::initConfig(const std::string& p) {
     std::cout << msg << "\n";}
 }
 
+// Create a new 'config.jsonc' file
 void Config::saveConfig(const std::string& path) {
     json j = {
         {"debug", {
@@ -89,7 +94,7 @@ void Config::saveConfig(const std::string& path) {
     std::cout << "Created default config: " << path << std::endl;
 }
 
-// Lecture du JSON existant
+// Loading existing 'config.jsonc'
 void Config::loadConfig(const std::string& path) {
     std::ifstream ifs(path);
     if (!ifs)
@@ -150,6 +155,7 @@ void Config::loadConfig(const std::string& path) {
     std::cout << "Configuration loaded successfully.\n";
 }
 
+// Ruleset parsing function
 std::pair<bool, std::string> Config::parseRuleset(std::string rawrulestr) {
     std::string rulestr;
     std::string errlog;
@@ -211,6 +217,7 @@ std::pair<bool, std::string> Config::parseRuleset(std::string rawrulestr) {
     return {true, errlog};
 }
 
+// Distribution type parsing function
 std::pair<bool, std::string> Config::parseDistType(std::string disttyp) {
     if (disttyp == "uniform" || disttyp == "bernoulli") {
         distType = disttyp;
@@ -220,6 +227,7 @@ std::pair<bool, std::string> Config::parseDistType(std::string disttyp) {
     }
 }
 
+// Recursive print of the config
 void Config::printJsonRecursive(const json& j, int indent, const std::string& prefix) const {
     std::string indentation(indent, ' ');
 
@@ -248,6 +256,7 @@ void Config::printJsonRecursive(const json& j, int indent, const std::string& pr
     }
 }
 
+// Prints all params in the console + additionnal info
 void Config::printAllParams() const {
     std::ifstream ifs(path);
     if (!ifs) {

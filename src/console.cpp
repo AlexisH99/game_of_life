@@ -22,7 +22,9 @@ Console::~Console() {
 
 }
 
+// Console initialization
 void Console::initConsole() {
+    // Initialization of VAO, VBOs and console shader
     vao = std::make_unique<GLVertexBuffer>();
     vbo = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);
     vboLogs = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);
@@ -30,6 +32,7 @@ void Console::initConsole() {
     vboSuggest = std::make_unique<GLBuffer>(GL_ARRAY_BUFFER);
     shaders = std::make_unique<GLProgram>(consoleVert, consoleFrag);
 
+    // print available commands in the console
     log("Available commands:");
     log("  start / stop / regen");
     log("  step <n_steps> <delay>");
@@ -38,6 +41,7 @@ void Console::initConsole() {
     log("Available globalProperties:");
     log("  windowSize | gridSize | ruleSet | seed | dist");
 
+    // help command implementation
     root.add("help", [&](const auto&) {
         log("Available commands:");
         log("  start / stop / regen");
@@ -48,19 +52,25 @@ void Console::initConsole() {
         log("  windowSize | gridSize | ruleSet | seed | dist");
     });
     
+    // start command implementation
     root.add("start", [&](const auto& args){
         if (args.size() > 1) log("ignored arguments after 'start'");
         command_start();
     });
+
+    // stop command implementation
     root.add("stop",  [&](const auto& args){
         if (args.size() > 1) log("ignored arguments after 'stop'");
         command_stop();
     });
+
+    // regen command implemetation : regenerate a new grid
     root.add("regen", [&](const auto& args){
         if (args.size() > 1) log("ignored arguments after 'regen'");
         command_regen();
     });
 
+    // step command implementation : number of steps and delay between each steps in seconds
     root.add("step", [&](const auto& args){
         if (args.size() == 1) command_step();
         else if (args.size() == 2) {
@@ -75,11 +85,15 @@ void Console::initConsole() {
         } else log("Usage: step <int> [float]");
     });
 
+    // get command implementation
     auto& get = root.add("get");
     get.add("windowSize", [&](auto&){ getWindowSize(); });
     get.add("gridSize",   [&](auto&){ getGridSize(); });
 
+    // set command implementation
     auto& set = root.add("set");
+
+    // windowSize property
     set.add("windowSize", [&](auto& args){
         if (args.size() != 4) {
             log("Usage: set windowSize <int|.> <int|.>");
@@ -105,6 +119,7 @@ void Console::initConsole() {
         return;
     });
     
+    // gridSize property
     set.add("gridSize",   [&](auto& args){
         if (args.size() != 4) {
             log("Usage: set gridSize <int> <int>");
@@ -124,6 +139,7 @@ void Console::initConsole() {
         return;
     });
 
+    // ruleSet property
     set.add("ruleSet", [&](auto& args){
         if (args.size() != 3) {
             log("Usage: set ruleSet <str>");
@@ -133,6 +149,7 @@ void Console::initConsole() {
         return;
     });
 
+    // seed property
     set.add("seed", [&](auto& args){
         if (args.size() != 3) {
             log("Usage: set seed <str>/<int>");
@@ -155,6 +172,7 @@ void Console::initConsole() {
         return;
     });
 
+    // dist property
     set.add("dist", [&](auto& args){
         if (args.size() != 3 && args.size() != 4) {
             log("Usage: set ruleSet <str> <float>");
@@ -173,6 +191,7 @@ void Console::initConsole() {
     });    
 }
 
+// Function to convert things from string (int, float, double, ...)
 template<typename T>
 std::optional<T> Console::from_string(const std::string& s) {
     static_assert(std::is_arithmetic_v<T>, "T doit être un type numérique");
@@ -184,6 +203,7 @@ std::optional<T> Console::from_string(const std::string& s) {
     return std::nullopt;
 }
 
+// Function to find a node with given tokens
 const Console::CommandNode* Console::findNode(const CommandNode& root, const std::vector<std::string>& tokens) {
     const CommandNode* node = &root;
     for (const auto& t : tokens) {
@@ -196,6 +216,7 @@ const Console::CommandNode* Console::findNode(const CommandNode& root, const std
     return node;
 }
 
+// Function to execute a command with given tokens
 void Console::executeCommand(const CommandNode& root, const std::vector<std::string>& tokens) {
     const Console::CommandNode* node = findNode(root, tokens);
     if (!node) {
@@ -206,18 +227,21 @@ void Console::executeCommand(const CommandNode& root, const std::vector<std::str
     else log("Incomplete command: missing subcommand");
 }
 
+// Log function in console with a maximum of 1000 lines
 void Console::log(const std::string& s) {
     lines.push_back(s);
     if (lines.size() > 1000) lines.erase(lines.begin());
 }
 
+// To be simplified with Console::executeCommand function
 void Console::execute(const std::string& command) {
+    // Command history of 1000 commands
     commandIndex = 0;
     commandHistory.push_front(command);
-    if (commandHistory.size() > 100) commandHistory.erase(commandHistory.begin());
+    if (commandHistory.size() > 1000) commandHistory.erase(commandHistory.begin());
     log("> " + command);
 
-    // === 1. Tokenize ===
+    // Tokenizer
     std::istringstream iss(command);
     std::vector<std::string> tokens;
     std::string token;
@@ -229,13 +253,16 @@ void Console::execute(const std::string& command) {
     executeCommand(root, tokens);
 }
 
+// Suggest function to get possible tokens evaluated using current entry in the console
 std::vector<std::string> Console::suggest(const CommandNode& root, const std::vector<std::string>& tokens, bool endsWithSpace) {
     const CommandNode* node = &root;
 
+    // Check if the current entry ends with a space
     size_t limit = tokens.size();
     if (!endsWithSpace && !tokens.empty())
         limit = tokens.size() - 1;
 
+    // Loop to find the next node
     for (size_t i = 0; i < limit; ++i) {
         auto it = node->children.find(tokens[i]);
         if (it == node->children.end())
@@ -243,6 +270,7 @@ std::vector<std::string> Console::suggest(const CommandNode& root, const std::ve
         node = &it->second;
     }
 
+    // Extract matches
     std::vector<std::string> matches;
     if (endsWithSpace) {
         for (const auto& [key, child] : node->children)
@@ -262,6 +290,7 @@ std::vector<std::string> Console::suggest(const CommandNode& root, const std::ve
     return matches;
 }
 
+// Draw function for the console
 void Console::draw() {
     if (!visible) return;
     pts.clear();
@@ -383,22 +412,26 @@ void Console::draw() {
     glDisable(GL_BLEND);
 }
 
+// Handle input function
 void Console::handleInput(int key, int action) {
     if (!visible) return;
     if (action == GLFW_PRESS || action == GLFW_REPEAT) {
         
+        // If enter pressed : execute command, clear input and update lineOffset
         if (key == GLFW_KEY_ENTER) {
             execute(input);
             input.clear();
             lineOffset = std::max(0, (int)lines.size() - maxVisibleLines);
         }
 
+        // Backspace pressed delete last character of the input and reset suggestions, if input is not empty
         else if (key == GLFW_KEY_BACKSPACE && !input.empty()) {
             input.pop_back();
             currentSuggestions.clear();
             currentSuggestionIndex = -1;
         }
 
+        // Key up searches through command history
         else if (key == GLFW_KEY_UP) {
             commandIndex += 1;
             commandIndex = std::clamp(commandIndex, 0, (int)commandHistory.size());
@@ -407,6 +440,7 @@ void Console::handleInput(int key, int action) {
             input = commandHistory[commandIndex-1];
         }
 
+        // Key down does the opposite as key up, and deletes current input if the user goes below the last command
         else if (key == GLFW_KEY_DOWN) {
             commandIndex -= 1;
             commandIndex = std::clamp(commandIndex, 0, (int)commandHistory.size());
@@ -418,6 +452,7 @@ void Console::handleInput(int key, int action) {
             input = commandHistory[commandIndex-1];
         }
 
+        // Tab key cycles the suggestions (Shift+Tab) cycles the other way
         else if (key == GLFW_KEY_TAB) {
             if (!currentSuggestions.empty()) {
                 if ((glfwGetKey(win->get(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(win->get(), GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)) {
@@ -430,6 +465,7 @@ void Console::handleInput(int key, int action) {
             }
         } 
 
+        // Right arrow key select the suggestion
         else if (key == GLFW_KEY_RIGHT) {
             if (!currentSuggestions.empty() && currentSuggestionIndex >= 0) {
                 const std::string& full = currentSuggestions[currentSuggestionIndex];
@@ -441,6 +477,7 @@ void Console::handleInput(int key, int action) {
             }
         }
 
+        // Crtl+C abort loop commands (for step command typically)
         else if (key == GLFW_KEY_C && (glfwGetKey(win->get(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
                           glfwGetKey(win->get(), GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)) {
             abortRequested = true;
@@ -448,6 +485,7 @@ void Console::handleInput(int key, int action) {
     }
 }
 
+// Special handle for characters
 void Console::handleChar(unsigned int codepoint) {
     if (!visible) return;
     if (codepoint >= 32 && codepoint < 127) {
@@ -457,6 +495,7 @@ void Console::handleChar(unsigned int codepoint) {
     }
 }
 
+// Append text to a vector, to be rendered as points, using font file
 void Console::appendText(std::vector<float>& pts, int x, int y, const std::string& text) {
     for (size_t i = 0; i < text.size(); i++) {
         unsigned char c = text[i];
@@ -490,6 +529,7 @@ void Console::command_regen() {
     grid->initRandomGrid();
 }
 
+// Alternative render loop to make on command n_steps with a delay between steps, cancellable with Crtl+C
 void Console::command_step(int n_step, float delay) {
     grid->pause = true;
 
@@ -522,6 +562,7 @@ void Console::command_step(int n_step, float delay) {
     abortRequested = false;
 }
 
+// Function to set window size with a minimum of 800x600
 void Console::setWindowSize(int w, int h) {
     if (w < 800) {
         cfg->width = 800;
@@ -542,6 +583,7 @@ void Console::setWindowSize(int w, int h) {
     }
 }
 
+// Function to set grid size
 void Console::setGridSize(int x, int y) {
     cfg->gridx = x;
     cfg->gridy = y;
@@ -552,6 +594,7 @@ void Console::setGridSize(int x, int y) {
     renderer->render();
 }
 
+// Function to set the rule set using parser
 void Console::setRuleset(std::string rulestr) {
     cfg->rulestr = rulestr;
     auto [ok, msg] = cfg->parseRuleset(cfg->rulestr);
@@ -563,6 +606,7 @@ void Console::setRuleset(std::string rulestr) {
     grid->initRuleset();
 }
 
+// Function to set seed, either random (rnd) or given number
 void Console::setSeed(bool isRandom, int seed) {
     if (isRandom) {
         cfg->randomSeed = true;
@@ -574,6 +618,7 @@ void Console::setSeed(bool isRandom, int seed) {
     grid->initRandomGrid();
 }
 
+// Function to set distribution, either uniform, either bernoulli with alive cells density (0.3 equals 30% of alive cells)
 void Console::setDistrib(std::string distType, float density) {
     cfg->distType = distType;
     cfg->density = density;
@@ -586,10 +631,12 @@ void Console::setDistrib(std::string distType, float density) {
     grid->initRandomGrid();
 }
 
+// Log the window size in console
 void Console::getWindowSize() {
     log(std::format("window size: {}x{}", cfg->width, cfg->height));
 }
 
+// Log grid size in console
 void Console::getGridSize() {
     log(std::format("grid size: {}x{}", cfg->gridx, cfg->gridy));
 }

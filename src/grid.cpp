@@ -11,6 +11,7 @@ Grid::~Grid() {
 
 }
 
+// Rng init with random or given seed
 void Grid::initSeed() {
     if (cfg->randomSeed) {
         gridSeed = std::random_device{}();
@@ -20,6 +21,7 @@ void Grid::initSeed() {
     rng.seed(gridSeed);
 }
 
+// Init size of every buffer related to grid
 void Grid::initSize() {
     rows = cfg->gridy + 2;
     words_per_row = w_for_w(cfg->gridx);
@@ -36,11 +38,13 @@ void Grid::initSize() {
     count.resize(9);
 }
 
+// Init born and survive masks
 void Grid::initRuleset() {
     born_rule = cfg->born_rule;
     survive_rule = cfg->survive_rule;
 }
 
+// Init grid mask
 void Grid::initMask() {
     int pad = ((words_per_row * 64) - cfg->gridx);
     leftpad = pad / 2;
@@ -58,6 +62,7 @@ void Grid::initMask() {
     }
 }
 
+// Init the grid as a checkerboard, for debug purposes
 void Grid::initCheckerGrid() {
     uint64_t word = 0x5555555555555555;
 
@@ -73,6 +78,7 @@ void Grid::initCheckerGrid() {
     }
 }
 
+// Init the grid as random
 void Grid::initRandomGrid() {
     if (cfg->distType == "uniform") {
         for (size_t i = 0; i < current.size(); ++i) {
@@ -93,16 +99,20 @@ void Grid::initRandomGrid() {
     }
 }
 
+// Step function
 void Grid::step() {
+    // Loop by row blocks for future multithread, currently the blocksize is locked to one, so this loop is neutral
     for (int rb = 1; rb < rows - 1; rb += blocksize) {
         int rend = std::min(rows - 1, rb + blocksize);
         for (int r = rb; r < rend; ++r) {
+            // Load top, mid (current) and bottom rows, mask row and out buffer pointers
             const uint64_t* top = &current[(r-1)*words_per_row];
             const uint64_t* mid = &current[r*words_per_row];
             const uint64_t* bot = &current[(r+1)*words_per_row];
             const uint64_t* row_mask = &mask[r*words_per_row];
             uint64_t* out = &next[r*words_per_row];
 
+            // Loop through each word of the rows, and shifting in each direction to get Moore's neighborhood
             for (int w = 0; w < words_per_row; ++w) {
                 uint64_t top_left  = (top[w] << 1) | (w>0 ? top[w-1] >> 63 : 0);
                 uint64_t top_mid   = top[w];
@@ -115,8 +125,7 @@ void Grid::step() {
                 uint64_t bot_mid   = bot[w];
                 uint64_t bot_right = (bot[w] >> 1) | (w<words_per_row-1 ? bot[w+1] << 63 : 0);
 
-                // bitwise addition
-                
+                // Bitwise adder
                 uint64_t s0 = 0, s1 = 0, s2 = 0, s3 = 0;
                 uint64_t c1 = 0, c2 = 0;
 
@@ -129,6 +138,7 @@ void Grid::step() {
                 c1 = s0 & bot_mid; s0 ^= bot_mid; c2 = s1 & c1; s1 ^= c1; s3 ^= s2 & c2; s2 ^= c2;
                 c1 = s0 & bot_right; s0 ^= bot_right; c2 = s1 & c1; s1 ^= c1; s3 ^= s2 & c2; s2 ^= c2;
 
+                // Count buffer: 0 to 8 neighboors for each cell of the current word
                 count[0] = ~s3 & ~s2 & ~s1 & ~s0;
                 count[1] = ~s3 & ~s2 & ~s1 & s0;
                 count[2] = ~s3 & ~s2 & s1 & ~s0;
@@ -139,32 +149,40 @@ void Grid::step() {
                 count[7] = ~s3 & s2 & s1 & s0;
                 count[8] = s3 & ~s2 & ~s1 & ~s0;
 
+                // Set born and survive masks for the word
                 uint64_t born = 0ULL, survive = 0ULL;
 
+                // Compute the born and survive condition given the count buffer and the born and survive rules
                 for (int i = 0; i < 9; ++i) {
                     if (born_rule & (1U << i)) born |= count[i];
                     if (survive_rule & (1U << i)) survive |= count[i];
                 }
 
+                // Final output with born and survive conditions, given the current state of the cells and the mask
                 out[w] = (born | (mid[w] & survive)) & row_mask[w];
             }
         }
     }
+    // Swap current and next buffers
     std::swap(current, next);
 }
 
+// Get raw grid content
 std::vector<uint64_t> Grid::getGrid() {
     return current;
 }
 
+// Get the mask
 std::vector<uint64_t> Grid::getMask() {
     return mask;
 }
 
+// Get the grid as a uint32_t recast for texture rendering
 const uint32_t* Grid::getGrid32Ptr() const {
     return reinterpret_cast<const uint32_t*>(current.data());
 }
 
+// Function to print the mask, for debug purposes
 void Grid::printMask() {
     for (int r = 0; r < rows; ++r) {
         for (int w = 0; w < words_per_row; ++w) {
@@ -176,6 +194,7 @@ void Grid::printMask() {
     }
 }
 
+// Function to print the grid, for debug purposes
 void Grid::printCurrent() {
     for (int r = 0; r < rows; ++r) {
         for (int w = 0; w < words_per_row; ++w) {
